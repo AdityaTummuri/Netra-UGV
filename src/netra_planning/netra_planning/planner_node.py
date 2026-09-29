@@ -115,6 +115,7 @@ except ImportError:
     class FailsafeState: pass
     class TerrainClassification:
         def __init__(self):
+            self.semantic_mask = []
             self.class_mask = []
 
 from netra_planning.teb_planner import TEBPlanner
@@ -309,9 +310,10 @@ class PlannerNode(Node):
 
     def _terrain_cb(self, msg: TerrainClassification):
         """Estimate forward corridor vegetation and mud density from semantic mask."""
-        if len(msg.class_mask) == 0:
+        raw_mask = getattr(msg, 'semantic_mask', getattr(msg, 'class_mask', []))
+        if len(raw_mask) == 0:
             return
-        mask = np.array(msg.class_mask, dtype=np.uint8)
+        mask = np.array(raw_mask, dtype=np.uint8)
         total_pixels = len(mask)
         if total_pixels > 0:
             self._veg_ratio = float(np.sum(mask == CLASS_PLIANT_VEGETATION)) / total_pixels

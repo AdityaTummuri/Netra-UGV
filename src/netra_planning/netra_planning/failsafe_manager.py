@@ -244,6 +244,7 @@ class FailsafeNode(Node):
 
         # Subscribers
         self.tamper_sub = self.create_subscription(Bool, '/netra/tamper_alert', self._tamper_cb, qos)
+        self.zero_sub = self.create_subscription(Bool, '/netra/zeroization_status', self._tamper_cb, qos)
         self.lens_sub = self.create_subscription(Float32, '/camera/lens_metrics', self._lens_cb, qos)
 
         self._tamper_flag = False
