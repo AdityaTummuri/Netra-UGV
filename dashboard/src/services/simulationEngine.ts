@@ -5,7 +5,7 @@ import { playWaypointPlacedSound, playAirPurgeSound, playEmergencyAlertSound } f
 export const INITIAL_POSE: UGVPose = {
   x: 0,
   y: 0,
-  heading: 90, // Facing East initially
+  heading: 59, // Bearing ~059° toward WP-1 (Alpha Recon)
   pitch: 0,
   roll: 0,
   linearVelocity: 0,
@@ -356,8 +356,8 @@ export class NetraSimulationService {
             }
           }
         } else {
-          // Steer towards target waypoint
-          const targetHeadingRad = Math.atan2(dy, dx);
+          // Steer towards target waypoint (Navigation convention: 0° = North, 90° = East)
+          const targetHeadingRad = Math.atan2(dx, dy);
           let targetHeadingDeg = (targetHeadingRad * 180) / Math.PI;
           if (targetHeadingDeg < 0) targetHeadingDeg += 360;
 
@@ -409,7 +409,7 @@ export class NetraSimulationService {
         this.pose.angularVelocity = 0;
         this.addLog('INFO', 'RTL', 'Successfully returned to Base coordinates.');
       } else {
-        const targetHeadingRad = Math.atan2(-this.pose.y, -this.pose.x);
+        const targetHeadingRad = Math.atan2(-this.pose.x, -this.pose.y);
         let targetHeadingDeg = (targetHeadingRad * 180) / Math.PI;
         if (targetHeadingDeg < 0) targetHeadingDeg += 360;
 
@@ -428,13 +428,13 @@ export class NetraSimulationService {
       if (Math.abs(this.pose.angularVelocity) < 0.01) this.pose.angularVelocity = 0;
     }
 
-    // Kinematic Integration
+    // Kinematic Integration (Standard navigation: 0° = North/+Y, 90° = East/+X)
     this.pose.heading += (this.pose.angularVelocity * 180 / Math.PI) * dt;
     this.pose.heading = (this.pose.heading + 360) % 360;
 
     const headingRad = (this.pose.heading * Math.PI) / 180;
-    const dx = this.pose.linearVelocity * Math.cos(headingRad) * dt;
-    const dy = this.pose.linearVelocity * Math.sin(headingRad) * dt;
+    const dx = this.pose.linearVelocity * Math.sin(headingRad) * dt;
+    const dy = this.pose.linearVelocity * Math.cos(headingRad) * dt;
 
     this.pose.x += dx;
     this.pose.y += dy;

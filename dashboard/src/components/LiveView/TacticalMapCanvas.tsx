@@ -462,13 +462,18 @@ export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
 
     // 9. UGV Vehicle Position & Sensor Heading Cone
     const ugvPos = worldToScreen(pose.x, pose.y, width, height);
-    const headingRad = ((pose.heading - 90) * Math.PI) / 180;
+    // Standard compass navigation: 0° = North, 90° = East, 180° = South, 270° = West
+    // On screen: +X is East (right), +Y is North (up, screenY decreasing)
+    // Model forward is drawn along +X, so canvas rotation angle is (pose.heading - 90)°
+    const canvasAngle = ((pose.heading - 90) * Math.PI) / 180;
     const fovHalfRad = (73 / 2) * (Math.PI / 180);
     const fovRange = 24 * scale;
 
     ctx.save();
     ctx.translate(ugvPos.x, ugvPos.y);
+    ctx.rotate(canvasAngle);
 
+    // Sensor FOV Cone (oriented directly along vehicle forward direction +X)
     const fovGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, fovRange);
     fovGrad.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
     fovGrad.addColorStop(0.7, 'rgba(56, 189, 248, 0.12)');
@@ -477,40 +482,49 @@ export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, fovRange, headingRad - fovHalfRad, headingRad + fovHalfRad);
+    ctx.arc(0, 0, fovRange, -fovHalfRad, fovHalfRad);
     ctx.closePath();
     ctx.fill();
 
-    const sweepRad = (radarSweepAngle * Math.PI) / 180;
-    ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+    // Radar scan beam sweeping inside forward sensor FOV
+    const sweepAngleLocal = Math.sin((radarSweepAngle * Math.PI) / 180) * (fovHalfRad * 0.9);
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(Math.cos(sweepRad) * fovRange * 0.85, Math.sin(sweepRad) * fovRange * 0.85);
+    ctx.lineTo(Math.cos(sweepAngleLocal) * fovRange * 0.9, Math.sin(sweepAngleLocal) * fovRange * 0.9);
     ctx.stroke();
 
-    ctx.rotate(headingRad);
     const chassisL = 1.2 * scale;
     const chassisW = 0.9 * scale;
 
+    // 4 Skid-steer Wheels / Treads
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(-chassisL / 2 - 2, -chassisW / 2 - 3, chassisL / 2.5, 4);
     ctx.fillRect(chassisL / 6, -chassisW / 2 - 3, chassisL / 2.5, 4);
     ctx.fillRect(-chassisL / 2 - 2, chassisW / 2 - 1, chassisL / 2.5, 4);
     ctx.fillRect(chassisL / 6, chassisW / 2 - 1, chassisL / 2.5, 4);
 
+    // Main Chassis Body
     ctx.fillStyle = '#0284c7';
     ctx.fillRect(-chassisL / 2, -chassisW / 2, chassisL, chassisW);
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(-chassisL / 2, -chassisW / 2, chassisL, chassisW);
 
+    // Forward Direction Arrow (Pointing directly forward along +X)
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(chassisL / 2 + 3, 0);
+    ctx.moveTo(chassisL / 2 + 4, 0);
     ctx.lineTo(chassisL / 6, -chassisW / 3);
     ctx.lineTo(chassisL / 6, chassisW / 3);
     ctx.closePath();
+    ctx.fill();
+
+    // Sensor camera lens at the front bumper
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(chassisL / 2, 0, 3, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
