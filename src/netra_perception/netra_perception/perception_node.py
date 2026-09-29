@@ -156,8 +156,14 @@ class PerceptionNode(Node):
 
         self.get_logger().info(
             f"Perception node initialized "
-            f"[backend={self.segmenter.backend}, sim={self.sim_mode}]"
+            f"[backend={self.segmenter.backend}, provider={getattr(self.segmenter, 'active_provider', 'N/A')}, "
+            f"resolution={self.segmenter.input_w}x{self.segmenter.input_h}, sim={self.sim_mode}]"
         )
+        if getattr(self.segmenter, 'cuda_fallback_warning', False):
+            self.get_logger().warn(
+                "CUDAExecutionProvider was available but session initialized with CPUExecutionProvider! "
+                "Ensure CUDA 12 and cuDNN DLLs are in system PATH."
+            )
 
     def _on_imu(self, msg: Imu):
         """Extract pitch angle from IMU orientation quaternion."""
@@ -241,6 +247,16 @@ class PerceptionNode(Node):
 
         # Step 2: BiSeNetV2 inference
         mask, confidence = self.segmenter.infer(cropped)
+
+        # Periodic logging of inference metrics (every 15 frames ≈ 1 sec at 15 Hz)
+        if self.frame_count % 15 == 0:
+            latency = getattr(self.segmenter, 'last_latency_ms', 0.0)
+            dist_str = getattr(self.segmenter, 'last_dist_str', 'N/A')
+            provider = getattr(self.segmenter, 'active_provider', self.segmenter.backend)
+            self.get_logger().info(
+                f"[BiSeNetV2 AI] Latency: {latency:.1f} ms | Provider: {provider} | "
+                f"Dist: [{dist_str}] | Conf: {confidence:.2f}"
+            )
 
         # Step 3: Publish TerrainClassification
         msg = TerrainClassification()

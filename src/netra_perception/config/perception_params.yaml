@@ -6,8 +6,8 @@ perception_node:
     simulation_mode: true
 
     # TensorRT / ONNX model paths
-    tensorrt_engine_path: ""     # e.g., weights/bisenetv2_rellis_int8.trt
-    onnx_model_path: ""          # e.g., weights/bisenetv2_rellis.onnx
+    tensorrt_engine_path: ""                    # e.g., weights/bisenetv2_rellis_int8.trt
+    onnx_model_path: "weights/bisenetv2_rellis.onnx" # Exported from PyTorch training
 
     # Camera intrinsics (Luxonis OAK-D Pro / Intel D455)
     camera_focal_y: 500.0        # f_y in pixels
