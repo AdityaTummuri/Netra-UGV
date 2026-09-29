@@ -39,18 +39,22 @@ export const INITIAL_HEALTH: SystemHealth = {
 };
 
 export const DEFAULT_WAYPOINTS: Waypoint[] = [
-  { id: 'wp-1', index: 1, x: 25, y: 15, status: 'pending', speedLimit: 1.5, label: 'ALPHA RECON' },
-  { id: 'wp-2', index: 2, x: 50, y: -20, status: 'pending', speedLimit: 1.2, label: 'BRAVO OBSERVATION' },
-  { id: 'wp-3', index: 3, x: 15, y: -45, status: 'pending', speedLimit: 1.0, label: 'CHARLIE TRENCH CHECK' },
-  { id: 'wp-4', index: 4, x: -30, y: -25, status: 'pending', speedLimit: 1.5, label: 'DELTA PERIMETER' },
+  { id: 'wp-1', index: 1, x: 16, y: 10, status: 'pending', speedLimit: 1.5, label: 'ALPHA RECON' },
+  { id: 'wp-2', index: 2, x: 18, y: -7, status: 'pending', speedLimit: 1.3, label: 'BRAVO OBSERVATION' },
+  { id: 'wp-3', index: 3, x: 5, y: -13, status: 'pending', speedLimit: 1.0, label: 'CHARLIE TRENCH CHECK' },
+  { id: 'wp-4', index: 4, x: -16, y: -9, status: 'pending', speedLimit: 1.4, label: 'DELTA PERIMETER' },
   { id: 'wp-5', index: 5, x: 0, y: 0, status: 'pending', speedLimit: 0.8, label: 'BASE HOME' },
 ];
 
 export const SIMULATED_OBSTACLES: PerceptionObstacle[] = [
-  { id: 'obs-1', type: 'NEGATIVE_VOID', x: 38, y: -8, distance: 14.5, confidence: 0.94, severity: 'CRITICAL' },
-  { id: 'obs-2', type: 'TRENCH', x: 20, y: -38, distance: 28.0, confidence: 0.89, severity: 'CRITICAL' },
-  { id: 'obs-3', type: 'BUNKER', x: -40, y: 30, distance: 52.0, confidence: 0.97, severity: 'MEDIUM' },
-  { id: 'obs-4', type: 'DEBRIS', x: 12, y: 8, distance: 9.2, confidence: 0.82, severity: 'LOW' },
+  { id: 'obs-1', type: 'NEGATIVE_VOID', x: 4.0, y: 3.0, distance: 5.0, confidence: 0.96, severity: 'MEDIUM' },   // Trench-Bravo
+  { id: 'obs-2', type: 'NEGATIVE_VOID', x: -8.0, y: -4.0, distance: 8.9, confidence: 0.94, severity: 'MEDIUM' }, // Trench-Alpha
+  { id: 'obs-3', type: 'NEGATIVE_VOID', x: 15.0, y: -12.0, distance: 19.2, confidence: 0.88, severity: 'LOW' }, // Trench-Charlie
+  { id: 'obs-4', type: 'NEGATIVE_VOID', x: -2.0, y: -13.0, distance: 13.1, confidence: 0.91, severity: 'LOW' }, // Trench-Delta
+  { id: 'obs-5', type: 'DEBRIS', x: 3.5, y: 0.8, distance: 3.6, confidence: 0.98, severity: 'MEDIUM' },
+  { id: 'obs-6', type: 'DEBRIS', x: 11.2, y: -4.3, distance: 12.0, confidence: 0.85, severity: 'LOW' },
+  { id: 'obs-7', type: 'DEBRIS', x: -10.2, y: 5.4, distance: 11.5, confidence: 0.87, severity: 'LOW' },
+  { id: 'obs-8', type: 'DEBRIS', x: 18.5, y: 4.2, distance: 18.9, confidence: 0.82, severity: 'LOW' },
 ];
 
 export class NetraSimulationService {
@@ -67,6 +71,7 @@ export class NetraSimulationService {
   private intervalTimer: number | null = null;
   private listeners: (() => void)[] = [];
   private airPurgeTimeout: number | null = null;
+  private lastEvadeLogTime: number = 0;
 
   constructor() {
     this.addLog('INFO', 'NETRA_CORE', 'Netra UGV Ground Control Station initialized');
@@ -129,11 +134,14 @@ export class NetraSimulationService {
 
   public addWaypoint(x: number, y: number, label?: string) {
     const nextIndex = this.waypoints.length + 1;
+    // Clamp coordinates strictly within the 50m x 36m battlefield perimeter
+    const clampedX = Math.max(-23, Math.min(23, Number(x.toFixed(1))));
+    const clampedY = Math.max(-15, Math.min(15, Number(y.toFixed(1))));
     const newWp: Waypoint = {
       id: `wp-${Date.now().toString(36)}-${nextIndex}`,
       index: nextIndex,
-      x: Number(x.toFixed(1)),
-      y: Number(y.toFixed(1)),
+      x: clampedX,
+      y: clampedY,
       status: 'pending',
       speedLimit: 1.5,
       label: label || `WP-${String(nextIndex).padStart(2, '0')}`
@@ -263,10 +271,10 @@ export class NetraSimulationService {
     this.demoScenario = scenario;
     if (scenario === 'PATROL_BORDER') {
       this.waypoints = [
-        { id: 'wp-p1', index: 1, x: 25, y: 15, status: 'pending', speedLimit: 1.5, label: 'P-1 OUTPOST' },
-        { id: 'wp-p2', index: 2, x: 45, y: -10, status: 'pending', speedLimit: 1.4, label: 'P-2 RIDGE' },
-        { id: 'wp-p3', index: 3, x: 20, y: -40, status: 'pending', speedLimit: 1.0, label: 'P-3 PERIMETER' },
-        { id: 'wp-p4', index: 4, x: -25, y: -25, status: 'pending', speedLimit: 1.5, label: 'P-4 VALLEY' },
+        { id: 'wp-p1', index: 1, x: 16, y: 11, status: 'pending', speedLimit: 1.5, label: 'P-1 NE SECTOR' },
+        { id: 'wp-p2', index: 2, x: 18, y: -8, status: 'pending', speedLimit: 1.3, label: 'P-2 SE RIDGE' },
+        { id: 'wp-p3', index: 3, x: 5, y: -13, status: 'pending', speedLimit: 1.0, label: 'P-3 SOUTH PERIMETER' },
+        { id: 'wp-p4', index: 4, x: -16, y: -9, status: 'pending', speedLimit: 1.4, label: 'P-4 WEST VALLEY' },
         { id: 'wp-p5', index: 5, x: 0, y: 0, status: 'pending', speedLimit: 1.0, label: 'BASE CP' },
       ];
       this.setMode('WAYPOINT_AUTO');
@@ -274,8 +282,9 @@ export class NetraSimulationService {
       this.addLog('INFO', 'DEMO', 'Demo Scenario: 5-Point Autonomous Perimeter Patrol loaded & running');
     } else if (scenario === 'NEGATIVE_OBSTACLE') {
       this.waypoints = [
-        { id: 'wp-no1', index: 1, x: 30, y: 5, status: 'pending', speedLimit: 1.2, label: 'TRENCH SURV' },
-        { id: 'wp-no2', index: 2, x: 40, y: -25, status: 'pending', speedLimit: 0.9, label: 'VOID BYPASS' },
+        { id: 'wp-no1', index: 1, x: 5, y: 5, status: 'pending', speedLimit: 1.2, label: 'TRENCH-BRAVO SURV' },
+        { id: 'wp-no2', index: 2, x: 14, y: -6, status: 'pending', speedLimit: 1.0, label: 'VOID BYPASS' },
+        { id: 'wp-no3', index: 3, x: 0, y: 0, status: 'pending', speedLimit: 0.9, label: 'BASE CP' },
       ];
       this.setMode('WAYPOINT_AUTO');
       this.startWaypointMission();
@@ -361,6 +370,48 @@ export class NetraSimulationService {
           let targetHeadingDeg = (targetHeadingRad * 180) / Math.PI;
           if (targetHeadingDeg < 0) targetHeadingDeg += 360;
 
+          // --- Dynamic Obstacle Perception & TEB Evasive Avoidance ---
+          let evadeSteerBias = 0;
+          let obstacleSpeedFactor = 1.0;
+          let activeEvadeObs: PerceptionObstacle | null = null;
+
+          this.obstacles.forEach(obs => {
+            const oDx = obs.x - this.pose.x;
+            const oDy = obs.y - this.pose.y;
+            const oDist = Math.hypot(oDx, oDy);
+            obs.distance = Number(oDist.toFixed(1));
+
+            // Bearing from UGV to obstacle
+            const bearingToObs = ((Math.atan2(oDx, oDy) * 180) / Math.PI + 360) % 360;
+            let relBearing = bearingToObs - this.pose.heading;
+            while (relBearing > 180) relBearing -= 360;
+            while (relBearing < -180) relBearing += 360;
+
+            // Update severity based on proximity
+            if (oDist < 3.5) obs.severity = 'CRITICAL';
+            else if (oDist < 7.0) obs.severity = 'MEDIUM';
+            else obs.severity = 'LOW';
+
+            // Obstacle in path: within 6.0m and inside forward cone (+-65 deg)
+            if (oDist < 6.0 && Math.abs(relBearing) < 65) {
+              const steerDir = relBearing >= 0 ? -1 : 1;
+              const proximityWeight = (6.0 - oDist) / 6.0;
+              evadeSteerBias += steerDir * proximityWeight * 42;
+              obstacleSpeedFactor = Math.min(obstacleSpeedFactor, Math.max(0.35, (oDist - 0.8) / 5.2));
+              activeEvadeObs = obs;
+            }
+          });
+
+          // Apply evasive steering if obstacle blocks current trajectory
+          if (activeEvadeObs && Math.abs(evadeSteerBias) > 4) {
+            targetHeadingDeg = (targetHeadingDeg + evadeSteerBias + 360) % 360;
+            if (Date.now() - this.lastEvadeLogTime > 4000) {
+              const targetObs = activeEvadeObs as PerceptionObstacle;
+            this.addLog('WARN', 'PLANNER', `TEB Planner: Executing active detour around ${targetObs.type} at ${targetObs.distance}m`);
+              this.lastEvadeLogTime = Date.now();
+            }
+          }
+
           // Shortest angle difference
           let angleDiff = targetHeadingDeg - this.pose.heading;
           while (angleDiff > 180) angleDiff -= 360;
@@ -371,9 +422,9 @@ export class NetraSimulationService {
           let desiredAngVel = angleDiff * pGain;
           desiredAngVel = Math.max(-1.8, Math.min(1.8, desiredAngVel));
 
-          // Linear velocity based on alignment
+          // Linear velocity based on alignment and obstacle proximity
           const alignmentFactor = Math.max(0.2, Math.cos((angleDiff * Math.PI) / 180));
-          const targetSpeed = (activeWp.speedLimit || 1.5) * alignmentFactor;
+          const targetSpeed = (activeWp.speedLimit || 1.5) * alignmentFactor * obstacleSpeedFactor;
           const maxSpeed = this.failsafe.vMaxAllowed;
           const desiredLinVel = Math.min(targetSpeed, maxSpeed);
 
@@ -439,6 +490,26 @@ export class NetraSimulationService {
     this.pose.x += dx;
     this.pose.y += dy;
     this.pose.odometryDistance += Math.hypot(dx, dy);
+
+    // Enforce 50m x 36m Battlefield Boundary (-23.5m to +23.5m X, -16.0m to +16.0m Y)
+    const MAX_X = 23.5;
+    const MAX_Y = 16.0;
+
+    if (this.pose.x > MAX_X) {
+      this.pose.x = MAX_X;
+      this.pose.linearVelocity *= 0.5;
+    } else if (this.pose.x < -MAX_X) {
+      this.pose.x = -MAX_X;
+      this.pose.linearVelocity *= 0.5;
+    }
+
+    if (this.pose.y > MAX_Y) {
+      this.pose.y = MAX_Y;
+      this.pose.linearVelocity *= 0.5;
+    } else if (this.pose.y < -MAX_Y) {
+      this.pose.y = -MAX_Y;
+      this.pose.linearVelocity *= 0.5;
+    }
 
     // Roll and pitch dynamic simulation
     this.pose.roll = -this.pose.angularVelocity * 4.2 + (Math.sin(this.pose.odometryDistance * 0.8) * 2.5);

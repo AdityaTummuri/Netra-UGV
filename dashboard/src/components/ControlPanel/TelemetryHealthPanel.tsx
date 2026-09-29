@@ -44,7 +44,7 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
   });
 
   return (
-    <div className="w-84 h-full flex flex-col bg-tactical-900 border-l border-tactical-800 select-none overflow-hidden text-slate-200">
+    <div className="w-full h-full flex flex-col bg-tactical-900 border-l border-tactical-800 select-none overflow-hidden text-slate-200">
       {/* Header */}
       <div className="h-10 bg-tactical-950 border-b border-tactical-800 px-3 flex items-center justify-between">
         <div className="flex items-center gap-2">

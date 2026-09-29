@@ -143,7 +143,7 @@ export const DriveControlPanel: React.FC<DriveControlPanelProps> = ({
   const cmacHex = ((Math.abs(Math.sin(pose.linearVelocity * 100)) * 0xFFFFFFFF) >>> 0).toString(16).padStart(8, '0').toUpperCase();
 
   return (
-    <div className="w-80 h-full flex flex-col bg-tactical-900 border-r border-tactical-800 select-none overflow-hidden text-slate-200">
+    <div className="w-full h-full flex flex-col bg-tactical-900 border-r border-tactical-800 select-none overflow-hidden text-slate-200">
       {/* Tab Switcher */}
       <div className="h-10 bg-tactical-950 border-b border-tactical-800 flex items-center px-2 gap-1">
         <button

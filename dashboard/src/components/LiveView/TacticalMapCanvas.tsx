@@ -64,7 +64,7 @@ const BOULDERS = [
 export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
   pose,
   waypoints,
-  obstacles: _obstacles,
+  obstacles,
   trail,
   onAddWaypoint,
   onRemoveWaypoint,
@@ -321,6 +321,33 @@ export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
       ctx.stroke();
     });
 
+    // 5b. Active Perception Obstacle Detection & TEB Evasion Rings
+    obstacles.forEach(obs => {
+      if (obs.distance <= 7.0) {
+        const op = worldToScreen(obs.x, obs.y, width, height);
+        const alertRadius = Math.max(16, 2.2 * scale);
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(op.x, op.y, alertRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = obs.severity === 'CRITICAL' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(245, 158, 11, 0.85)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 3]);
+        ctx.stroke();
+
+        ctx.fillStyle = obs.severity === 'CRITICAL' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.12)';
+        ctx.fill();
+        ctx.restore();
+
+        if (!isPip && scale > 6) {
+          ctx.fillStyle = obs.severity === 'CRITICAL' ? '#f87171' : '#fbbf24';
+          ctx.font = 'bold 9px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`EVADING: ${obs.distance}m`, op.x, op.y - alertRadius - 4);
+        }
+      }
+    });
+
     // 6. Tactical Grid Lines
     const origin = worldToScreen(0, 0, width, height);
     const gridStepMeters = scale > 12 ? 5 : 10;
@@ -529,7 +556,7 @@ export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
 
     ctx.restore();
     ctx.restore();
-  }, [pose, waypoints, trail, scale, offset, worldToScreen, screenToWorld, selectedWpId, mapLayer, radarSweepAngle, isPip]);
+  }, [pose, waypoints, obstacles, trail, scale, offset, worldToScreen, screenToWorld, selectedWpId, mapLayer, radarSweepAngle, isPip]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full flex flex-col bg-tactical-950 overflow-hidden select-none">
