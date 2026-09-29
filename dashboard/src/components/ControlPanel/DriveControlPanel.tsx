@@ -38,6 +38,14 @@ export const DriveControlPanel: React.FC<DriveControlPanelProps> = ({
   const joystickRef = useRef<HTMLDivElement | null>(null);
   const [joystickPos, setJoystickPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDraggingJoy, setIsDraggingJoy] = useState<boolean>(false);
+  const [freshness, setFreshness] = useState<number>(14280);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFreshness(f => (f + 1) % 1000000);
+    }, 50);
+    return () => clearInterval(timer);
+  }, []);
 
   // Keyboard Teleop listener (WASD / Arrow Keys)
   useEffect(() => {
@@ -277,7 +285,7 @@ export const DriveControlPanel: React.FC<DriveControlPanelProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Freshness:</span>
-                <span className="text-cyan-300">#{Math.floor(Date.now() / 50) % 100000}</span>
+                <span className="text-cyan-300">#{freshness}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">AES-128 CMAC:</span>
