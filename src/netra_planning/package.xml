@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>netra_planning</name>
+  <version>1.0.0</version>
+  <description>
+    Kinodynamic Timed-Elastic-Band (TEB) trajectory planner, adaptive speed governor,
+    pitch/roll tip-over and suspension shock safety guards, and 4-tier deterministic
+    failsafe limp-home state machine for NETRA-UGV.
+  </description>
+  <maintainer email="team@netra-ugv.in">NETRA-UGV Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>netra_msgs</depend>
+  <depend>netra_security</depend>
+
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,60 @@
+# ==============================================================================
+# NETRA-UGV Planning & Safety Stack Configuration
+# ==============================================================================
+
+netra_planner:
+  ros__parameters:
+    # Execution frequency (POSIX SCHED_FIFO 70 real-time budget)
+    control_rate_hz: 20.0
+
+    # Kinodynamic limits (4-wheel skid-steer tactical chassis)
+    v_max: 1.5                   # Maximum forward velocity (m/s)
+    v_min: -0.5                  # Maximum reverse velocity (m/s)
+    omega_max: 1.5               # Maximum yaw rate (rad/s)
+    acc_linear_max: 1.5          # Maximum forward acceleration (m/s^2)
+    acc_angular_max: 2.0         # Maximum yaw acceleration (rad/s^2)
+
+    # Chassis dimensions
+    wheelbase: 0.65              # Distance between front and rear axles (m)
+    track_width: 0.60            # Distance between left and right wheels (m)
+
+    # TEB Trajectory Optimizer tuning
+    horizon_steps: 15            # Number of knots in elastic band
+    dt_nominal: 0.1              # Nominal time delta between knots (seconds)
+    weight_time: 1.0             # Weight on trajectory traversal time
+    weight_path: 2.0             # Weight on smooth path length
+    weight_kinematics: 5.0       # Weight on non-holonomic skid-steer alignment
+    weight_obstacles: 15.0       # Repulsion weight from costmap obstacles
+    weight_acceleration: 1.0     # Smooth acceleration penalty
+    obstacle_inflation_radius: 0.45 # Safety margin around lethal cells (m)
+
+    # Default mission navigation
+    default_waypoint_distance: 5.0 # Forward lookahead when no goal published (m)
+
+    # SecOC CAN Authentication
+    secoc_key_path: ""           # Empty uses simulation deterministic key
+
+    # Adaptive Speed Governor thresholds
+    v_brush_cap: 0.5             # Speed cap in >30% pliant vegetation (m/s)
+    v_mud_cap: 0.4               # Speed cap in >20% mud hazard (m/s)
+    v_degraded_cap: 0.8          # Speed cap in Level 1 vision degraded (m/s)
+    slope_threshold_rad: 0.20    # ~11.5 deg incline before speed tapering
+    slope_critical_rad: 0.35     # ~20.0 deg critical incline
+    roughness_threshold: 0.04    # Elevation variance (m^2) triggering speed reduction
+
+    # Real-Time Safety Guards (Tip-over & Shock)
+    pitch_warn_deg: 17.0         # Warning pitch angle (degrees)
+    pitch_crit_deg: 22.0         # Critical pitch tip-over limit (degrees)
+    roll_warn_deg: 14.0          # Warning roll angle (degrees)
+    roll_crit_deg: 18.0          # Critical roll tip-over limit (degrees)
+    shock_threshold_g: 1.8       # Suspension shock limit in vertical Gs
+    latch_duration_sec: 1.2      # Emergency stop latch cooldown (seconds)
+
+failsafe_manager:
+  ros__parameters:
+    publish_rate_hz: 10.0
+    obscuration_degraded_thresh: 0.35 # Lens obscuration triggering Level 1
+    obscuration_critical_thresh: 0.70 # Lens obscuration triggering Level 2
+    obscuration_recovery_thresh: 0.20 # Threshold for recovery back to Level 0
+    air_purge_duration_sec: 1.5       # Pneumatic pulse cleaning duration (s)
+    recovery_dwell_sec: 1.0           # Debounce time before clearing degraded mode

@@ -1,0 +1,65 @@
+# ==============================================================================
+# NETRA-UGV Git Ignore Configuration (ROS 2 Humble / Python / C++)
+# ==============================================================================
+
+# ROS 2 & Colcon Build Artifacts
+build/
+install/
+log/
+.colcon/
+*.colcon
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+*.egg
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Editor & IDE Directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.directory
+.DS_Store
+Thumbs.db
+
+# ROS 2 Logs, Bags & Replays
+*.bag
+*.db3
+*.mcap
+*.log
+
+# Heavy Machine Learning Weights (keep repo lightweight, download via weights/README.md)
+*.engine
+*.plan
+*.weights
+*.pth
+*.pt
+*.bin
+*.ckpt
+
+# Temporary Scratch Files & OS Dumps
+scratch/
+tmp/
+*.tmp
+*.bak
+core
+core.*
+
+# Hardware Decryption Keys & Certificates (prevent accidental key leaks)
+*.key
+*.p12
+*.pfx
+secrets/

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>netra_localization</name>
+  <version>1.0.0</version>
+  <description>
+    Visual-Inertial Odometry (VIO) for GPS-denied navigation using
+    OpenVINS-style EKF-MSCKF with FAST corner detection, multi-scale KLT
+    optical flow, 500 Hz IMU pre-integration, and async loop closure.
+    Target drift: less than 1.2 percent over 500m in GPS blackout.
+  </description>
+  <maintainer email="team@netra-ugv.in">NETRA-UGV Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>netra_msgs</depend>
+
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

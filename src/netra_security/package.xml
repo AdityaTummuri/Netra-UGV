@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>netra_security</name>
+  <version>1.0.0</version>
+  <description>
+    S-ROS 2 security policies, SecOC CAN-FD authentication driver,
+    hardware tamper monitoring, and cryptographic zeroization trigger
+    for the NETRA-UGV tactical autonomous navigation stack.
+  </description>
+  <maintainer email="team@netra-ugv.in">NETRA-UGV Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>netra_msgs</depend>
+
+  <exec_depend>python3-cryptography</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

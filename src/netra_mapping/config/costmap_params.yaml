@@ -1,0 +1,13 @@
+# NETRA-UGV 2.5D Costmap Configuration
+# Reference: TECHNICAL_ARCHITECTURE.md §5.4
+
+costmap_node:
+  ros__parameters:
+    grid_size: 100           # 100x100 cells
+    resolution: 0.1          # 0.1m per cell → 10m × 10m coverage
+    update_rate_hz: 10.0     # Costmap update frequency
+    w_slope: 80.0            # Slope gradient weight
+    w_roughness: 60.0        # Surface roughness weight
+    w_semantic: 1.0          # Semantic class cost weight
+    w_void: 255.0            # Void (ditch) cost weight
+    inflation_radius_m: 0.3  # Barrier inflation radius (meters)

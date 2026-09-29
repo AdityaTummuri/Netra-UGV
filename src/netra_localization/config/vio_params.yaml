@@ -1,0 +1,25 @@
+# NETRA-UGV Visual-Inertial Odometry Configuration
+# Reference: TECHNICAL_ARCHITECTURE.md §2, §3
+
+vio_node:
+  ros__parameters:
+    simulation_mode: true
+
+    # Camera intrinsics (Luxonis OAK-D Pro)
+    camera_focal_x: 500.0
+    camera_focal_y: 500.0
+    camera_cx: 640.0
+    camera_cy: 360.0
+
+    # IMU noise parameters (TDK ICM-42688-P)
+    gyro_noise: 1.2e-3         # rad/s/√Hz
+    accel_noise: 8.0e-3        # m/s²/√Hz
+    gyro_walk: 2.0e-5          # rad/s²/√Hz
+    accel_walk: 3.0e-4         # m/s³/√Hz
+
+    # Feature tracking
+    max_features: 200
+    max_clones: 20
+
+    # Loop closure
+    loop_closure_enabled: true

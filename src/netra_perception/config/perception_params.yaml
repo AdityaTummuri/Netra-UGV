@@ -1,0 +1,30 @@
+# NETRA-UGV Perception Pipeline Configuration
+# Reference: MASTER_PROJECT_REPORT.md §3.1, §3.2
+
+perception_node:
+  ros__parameters:
+    simulation_mode: true
+
+    # TensorRT / ONNX model paths
+    tensorrt_engine_path: ""     # e.g., weights/bisenetv2_rellis_int8.trt
+    onnx_model_path: ""          # e.g., weights/bisenetv2_rellis.onnx
+
+    # Camera intrinsics (Luxonis OAK-D Pro / Intel D455)
+    camera_focal_y: 500.0        # f_y in pixels
+    camera_cy: 360.0             # c_y principal point (pixels)
+    image_height: 720
+    image_width: 1280
+
+    # Horizon ROI crop parameters
+    horizon_margin_px: 50        # Δv margin above horizon line
+    chassis_crop_px: 40          # Pixels to crop from bottom (vehicle hood)
+
+    # Stereo depth parameters
+    stereo_baseline_m: 0.075     # Stereo camera baseline (meters)
+    max_disparity: 128           # Maximum disparity search range
+
+    # Bayesian temporal filter
+    bayesian_threshold: 3.5      # Log-odds threshold for barrier commitment
+
+    # Pipeline rate
+    inference_rate_hz: 15.0      # Semantic segmentation rate (Hz)

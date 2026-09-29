@@ -1,0 +1,19 @@
+# NETRA-UGV Security Configuration
+# Reference: TECHNICAL_ARCHITECTURE.md §6
+
+secoc_can_driver:
+  ros__parameters:
+    simulation_mode: true
+    secoc_key_path: ""            # Path to 16-byte AES-128 key file (TPM in production)
+    can_bus_interface: "can0"      # SocketCAN interface name
+    can_arbitration_id: 0x100      # CAN-FD arbitration ID for velocity commands
+    dispatch_rate_hz: 50.0         # Target CAN dispatch rate
+
+tamper_monitor:
+  ros__parameters:
+    simulation_mode: true
+    tamper_gpio_pin: 17            # BCM pin for serpentine continuity loop
+    photodiode_gpio_pin: 27        # BCM pin for ambient light photodiode
+    geofence_enabled: false        # Enable geofence boundary enforcement
+    zeroization_timeout_ms: 85.0   # Maximum allowed zeroization latency
+    heartbeat_timeout_s: 5.0       # Watchdog heartbeat timeout
