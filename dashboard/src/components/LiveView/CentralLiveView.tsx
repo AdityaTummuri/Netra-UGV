@@ -203,8 +203,8 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
 
         {/* Split Screen Mode */}
         {viewMode === 'SPLIT' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full divide-y lg:divide-y-0 lg:divide-x divide-tactical-800">
-            <div className="w-full h-full relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full divide-y lg:divide-y-0 lg:divide-x divide-tactical-800 min-h-0 min-w-0 overflow-hidden">
+            <div className="w-full h-full relative min-h-0 min-w-0 overflow-hidden">
               <TacticalMapCanvas
                 pose={pose}
                 waypoints={waypoints}
@@ -214,14 +214,16 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
                 onRemoveWaypoint={onRemoveWaypoint}
                 onClearWaypoints={onClearWaypoints}
                 onStartMission={onStartMission}
+                isSplit={true}
               />
             </div>
-            <div className="w-full h-full relative">
+            <div className="w-full h-full relative min-h-0 min-w-0 overflow-hidden">
               <CameraHUD
                 pose={pose}
                 failsafe={failsafe}
                 obstacles={obstacles}
                 onTriggerAirPurge={onTriggerAirPurge}
+                isSplit={true}
               />
             </div>
           </div>
@@ -229,36 +231,78 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
 
         {/* Floating Picture-in-Picture (PIP) Window */}
         {pipVisible && viewMode === 'MAP_PRIMARY' && (
-          <div className="absolute bottom-16 right-4 w-80 h-52 rounded-xl overflow-hidden border-2 border-emerald-500/50 shadow-2xl z-20 bg-tactical-950/95 group">
-            <div className="absolute top-1.5 left-2.5 z-30 flex items-center gap-1.5 pointer-events-none bg-tactical-950/70 px-2 py-0.5 rounded">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[10px] font-mono font-bold text-slate-200">LIVE FORWARD CAM</span>
+          <div className="absolute top-4 right-4 w-72 h-44 rounded-xl overflow-hidden border-2 border-emerald-500/60 shadow-2xl z-30 bg-tactical-950 flex flex-col group backdrop-blur-md">
+            <div className="h-6 bg-tactical-900/90 px-2 flex items-center justify-between z-30 border-b border-tactical-800">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-slate-200">FORWARD SENSOR (PIP)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={swapViews}
+                  className="p-0.5 hover:bg-tactical-800 rounded text-slate-400 hover:text-white"
+                  title="Swap with Main View"
+                >
+                  <ArrowLeftRight className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => setPipVisible(false)}
+                  className="p-0.5 hover:bg-tactical-800 rounded text-slate-400 hover:text-red-400 text-[10px]"
+                  title="Close PIP"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <CameraHUD
-              pose={pose}
-              failsafe={failsafe}
-              obstacles={obstacles}
-              onTriggerAirPurge={onTriggerAirPurge}
-            />
+            <div className="flex-1 relative overflow-hidden">
+              <CameraHUD
+                pose={pose}
+                failsafe={failsafe}
+                obstacles={obstacles}
+                onTriggerAirPurge={onTriggerAirPurge}
+                isPip={true}
+              />
+            </div>
           </div>
         )}
 
         {pipVisible && viewMode === 'CAMERA_PRIMARY' && (
-          <div className="absolute bottom-16 right-4 w-80 h-52 rounded-xl overflow-hidden border-2 border-cyan-500/50 shadow-2xl z-20 bg-tactical-950/95 group">
-            <div className="absolute top-1.5 left-2.5 z-30 flex items-center gap-1.5 pointer-events-none bg-tactical-950/70 px-2 py-0.5 rounded">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span className="text-[10px] font-mono font-bold text-slate-200">TACTICAL MAP PIP</span>
+          <div className="absolute top-4 right-4 w-72 h-44 rounded-xl overflow-hidden border-2 border-cyan-500/60 shadow-2xl z-30 bg-tactical-950 flex flex-col group backdrop-blur-md">
+            <div className="h-6 bg-tactical-900/90 px-2 flex items-center justify-between z-30 border-b border-tactical-800">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span className="text-[10px] font-mono font-bold text-slate-200">TACTICAL MAP (PIP)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={swapViews}
+                  className="p-0.5 hover:bg-tactical-800 rounded text-slate-400 hover:text-white"
+                  title="Swap with Main View"
+                >
+                  <ArrowLeftRight className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => setPipVisible(false)}
+                  className="p-0.5 hover:bg-tactical-800 rounded text-slate-400 hover:text-red-400 text-[10px]"
+                  title="Close PIP"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <TacticalMapCanvas
-              pose={pose}
-              waypoints={waypoints}
-              obstacles={obstacles}
-              trail={trail}
-              onAddWaypoint={onAddWaypoint}
-              onRemoveWaypoint={onRemoveWaypoint}
-              onClearWaypoints={onClearWaypoints}
-              onStartMission={onStartMission}
-            />
+            <div className="flex-1 relative overflow-hidden">
+              <TacticalMapCanvas
+                pose={pose}
+                waypoints={waypoints}
+                obstacles={obstacles}
+                trail={trail}
+                onAddWaypoint={onAddWaypoint}
+                onRemoveWaypoint={onRemoveWaypoint}
+                onClearWaypoints={onClearWaypoints}
+                onStartMission={onStartMission}
+                isPip={true}
+              />
+            </div>
           </div>
         )}
       </div>

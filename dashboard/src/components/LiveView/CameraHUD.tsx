@@ -17,6 +17,8 @@ interface CameraHUDProps {
   failsafe: FailsafeState;
   obstacles: PerceptionObstacle[];
   onTriggerAirPurge: () => void;
+  isPip?: boolean;
+  isSplit?: boolean;
 }
 
 type VisionMode = 'RGB' | 'AI_SEMANTIC' | 'THERMAL' | 'NVG';
@@ -26,6 +28,8 @@ export const CameraHUD: React.FC<CameraHUDProps> = ({
   failsafe,
   obstacles,
   onTriggerAirPurge,
+  isPip = false,
+  isSplit = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [visionMode, setVisionMode] = useState<VisionMode>('RGB');
@@ -479,8 +483,10 @@ export const CameraHUD: React.FC<CameraHUDProps> = ({
 
   return (
     <div className="relative w-full h-full flex flex-col bg-tactical-950 overflow-hidden select-none">
-      {/* Top Vision Mode Toolbar */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
+      {/* Top Vision Mode Toolbar (Hidden in PIP) */}
+      {!isPip && (
+      <div className={`absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10 gap-2 ${isSplit ? "flex-wrap" : ""}`}>
+
         <div className="flex items-center gap-1.5 pointer-events-auto bg-tactical-900/90 backdrop-blur-md border border-tactical-700/80 p-1 rounded-lg shadow-xl">
           <button
             onClick={() => switchVisionMode('RGB')}
@@ -549,12 +555,13 @@ export const CameraHUD: React.FC<CameraHUDProps> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Canvas Feed */}
       <canvas ref={canvasRef} className="w-full h-full" />
 
       {/* AI Semantic Color Legend (shown when AI_SEMANTIC is active) */}
-      {visionMode === 'AI_SEMANTIC' && (
+      {!isPip && visionMode === 'AI_SEMANTIC' && (
         <div className="absolute top-16 left-3 pointer-events-none z-10 bg-tactical-950/85 backdrop-blur-md border border-tactical-700/80 p-2.5 rounded-lg text-[11px] font-mono shadow-xl flex flex-col gap-1.5">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">BiSeNetV2 Sovereign Classes</div>
           <div className="flex items-center gap-2">
@@ -576,8 +583,10 @@ export const CameraHUD: React.FC<CameraHUDProps> = ({
         </div>
       )}
 
-      {/* Bottom Camera Action Bar */}
-      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
+      {/* Bottom Camera Action Bar (Hidden in PIP) */}
+      {!isPip && (
+      <div className={`absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10 gap-2 ${isSplit ? "flex-wrap" : ""}`}>
+
         <div className="flex items-center gap-3 pointer-events-auto bg-tactical-900/90 backdrop-blur-md border border-tactical-700/80 px-3 py-1.5 rounded-lg text-xs font-mono shadow-xl">
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400">PITCH:</span>
@@ -614,6 +623,7 @@ export const CameraHUD: React.FC<CameraHUDProps> = ({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 };
