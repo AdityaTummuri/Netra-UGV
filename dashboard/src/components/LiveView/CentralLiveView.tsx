@@ -13,6 +13,7 @@ import { CameraHUD } from './CameraHUD';
 import { LidarView } from './LidarView';
 import { AiSegmentationLab } from './AiSegmentationLab';
 import { WebotsMissionView } from './WebotsMissionView';
+import { TacticalFeedsDeck } from './TacticalFeedsDeck';
 import type { UGVPose, Waypoint, FailsafeState, PerceptionObstacle } from '../../types/telemetry';
 import { playTacticalBlip } from '../../utils/audio';
 
@@ -57,9 +58,9 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
   };
 
   return (
-    <div className="relative flex-1 flex flex-col min-h-0 bg-tactical-950 border-x border-tactical-800 overflow-hidden">
+    <div className="relative w-full h-full flex flex-col min-h-0 bg-tactical-950 border-x border-tactical-800 overflow-hidden">
       {/* View Switcher Top Bar */}
-      <div className="h-10 bg-tactical-900 border-b border-tactical-800 px-3 flex items-center justify-between z-20 select-none overflow-x-auto">
+      <div className="h-10 shrink-0 bg-tactical-900 border-b border-tactical-800 px-3 flex items-center justify-between z-20 select-none overflow-x-auto">
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleTabChange('MAP_PRIMARY')}
@@ -160,7 +161,7 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
       </div>
 
       {/* Main View Area */}
-      <div className="relative flex-1 min-h-0 w-full h-full">
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden flex flex-col">
         {/* Single Full View Modes */}
         {viewMode === 'MAP_PRIMARY' && (
           <TacticalMapCanvas
@@ -203,7 +204,7 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
 
         {/* Split Screen Mode */}
         {viewMode === 'SPLIT' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full divide-y lg:divide-y-0 lg:divide-x divide-tactical-800 min-h-0 min-w-0 overflow-hidden">
+          <div className="flex-1 w-full h-full grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-tactical-800 min-h-0 min-w-0 overflow-hidden">
             <div className="w-full h-full relative min-h-0 min-w-0 overflow-hidden">
               <TacticalMapCanvas
                 pose={pose}
@@ -306,6 +307,17 @@ export const CentralLiveView: React.FC<CentralLiveViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Docked Bottom Tactical Subsystem Streams & Mission Feeds */}
+      {(viewMode === 'MAP_PRIMARY' || viewMode === 'CAMERA_PRIMARY' || viewMode === 'SPLIT' || viewMode === 'LIDAR') && (
+        <TacticalFeedsDeck
+          pose={pose}
+          waypoints={waypoints}
+          obstacles={obstacles}
+          failsafe={failsafe}
+          onTriggerAirPurge={onTriggerAirPurge}
+        />
+      )}
     </div>
   );
 };

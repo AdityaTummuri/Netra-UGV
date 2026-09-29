@@ -133,7 +133,7 @@ export const App: React.FC = () => {
         </div>
 
         {/* Central Live View Dashboard */}
-        <div className="flex-1 min-w-0 h-full overflow-hidden relative">
+        <div className="flex-1 min-w-0 h-full overflow-hidden relative flex flex-col">
           <CentralLiveView
             pose={pose}
             waypoints={waypoints}
