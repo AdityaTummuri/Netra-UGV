@@ -49,6 +49,11 @@ Thumbs.db
 *.pt
 *.bin
 *.ckpt
+*.trt
+
+# Explicitly allow trained NETRA-UGV model artifacts
+!weights/bisenetv2_rellis.onnx
+!weights/bisenetv2_rellis_best.pth
 
 # Temporary Scratch Files & OS Dumps
 scratch/

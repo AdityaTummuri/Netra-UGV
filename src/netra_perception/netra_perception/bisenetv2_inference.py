@@ -1,26 +1,30 @@
 """
 NETRA-UGV BiSeNetV2 Terrain Segmentation Inference
 ====================================================
-Loads and runs the BiSeNetV2-Lite (3.4M parameters) terrain classifier.
+Loads and runs the BiSeNetV2-Lite (2.31M parameters) terrain classifier.
 
-Primary path:   TensorRT INT8 serialized engine (2.6 ms on Jetson Orin Nano)
-Fallback path:  OpenCV DNN with ONNX model
-Demo fallback:  HSV-based color-space heuristic segmenter (no model required)
+Primary paths in order of preference:
+  1. TensorRT INT8 serialized engine (production / Jetson Orin Nano)
+  2. ONNX Runtime with CUDAExecutionProvider (GPU accelerated, with CPU fallback)
+  3. OpenCV DNN with ONNX model (lightweight CPU fallback)
+  4. HSV-based color-space heuristic segmenter (zero-dependency demo fallback)
 
 4 Functional Surface Classes:
-  0 - SOLID_GROUND:       Dry soil, gravel, packed track (Full speed)
-  1 - PLIANT_VEGETATION:  Grass, brush (Speed governed <= 0.5 m/s)
-  2 - MUD_HAZARD:         Wet clay, marsh (Traction warning)
-  3 - RIGID_OBSTACLE:     Rocks, trees, walls (Hard barrier)
+  0 - SOLID_GROUND:       Dry soil, gravel, packed track, asphalt (Full speed <= 1.5 m/s)
+  1 - PLIANT_VEGETATION:  Grass, brush (Governed speed <= 0.5 m/s)
+  2 - MUD_HAZARD:         Wet clay, marsh, puddles (Traction precaution <= 0.4 m/s)
+  3 - RIGID_OBSTACLE:     Rocks, trees, walls, barriers (Hard obstacle / Stop)
 
-Reference: MASTER_PROJECT_REPORT.md §3.1, RESEARCH_FEEDER_BEL_UGV.md §C.1
+Reference: MASTER_PROJECT_REPORT.md §3.1, WEIGHTS_AND_MODELS_TRAINING.md
 """
 
+import os
+import sys
+import time
+import logging
 import numpy as np
 import cv2
-import os
-import logging
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +40,31 @@ DEFAULT_INPUT_W = 1024
 DEFAULT_INPUT_H = 448
 
 
+def _resolve_model_path(path: str) -> str:
+    """Resolves relative or workspace-relative model paths."""
+    if not path:
+        return ""
+    if os.path.isabs(path) and os.path.exists(path):
+        return path
+    if os.path.exists(path):
+        return os.path.abspath(path)
+    # Search relative to repository root
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    candidate = os.path.join(repo_root, path)
+    if os.path.exists(candidate):
+        return candidate
+    return path
+
+
 class BiSeNetV2Inference:
     """
     Multi-backend terrain segmentation inference engine.
 
     Attempts to load backends in order of preference:
       1. TensorRT INT8 engine (production / Jetson)
-      2. OpenCV DNN with ONNX model (CPU fallback)
-      3. HSV heuristic segmenter (zero-dependency demo)
+      2. ONNX Runtime (CUDAExecutionProvider / CPUExecutionProvider)
+      3. OpenCV DNN with ONNX model (CPU fallback)
+      4. HSV heuristic segmenter (zero-dependency demo)
     """
 
     def __init__(
@@ -55,27 +76,46 @@ class BiSeNetV2Inference:
     ):
         self.input_w = input_width
         self.input_h = input_height
-        self.backend = 'heuristic'  # default fallback
+        self.backend = 'heuristic'
+        self.active_provider = 'none'
+        self.cuda_fallback_warning = False
+        self.last_latency_ms = 0.0
+        self.last_dist_str = "N/A"
 
-        # --- Attempt TensorRT ---
-        if engine_path and os.path.exists(engine_path):
-            if self._try_load_tensorrt(engine_path):
+        # ImageNet normalization parameters matching training pipeline
+        self.mean = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 3)
+        self.std = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 3)
+
+        resolved_engine = _resolve_model_path(engine_path)
+        resolved_onnx = _resolve_model_path(onnx_path)
+
+        # --- 1. Attempt TensorRT ---
+        if resolved_engine and os.path.exists(resolved_engine):
+            if self._try_load_tensorrt(resolved_engine):
                 self.backend = 'tensorrt'
-                logger.info(f"TensorRT INT8 engine loaded: {engine_path}")
+                self.active_provider = 'TensorRT_INT8'
+                logger.info(f"TensorRT INT8 engine loaded: {resolved_engine}")
 
-        # --- Attempt OpenCV DNN ONNX ---
-        if self.backend != 'tensorrt' and onnx_path and os.path.exists(onnx_path):
-            if self._try_load_opencv_dnn(onnx_path):
+        # --- 2. Attempt ONNX Runtime ---
+        if self.backend == 'heuristic' and resolved_onnx and os.path.exists(resolved_onnx):
+            if self._try_load_onnxruntime(resolved_onnx):
+                self.backend = 'onnxruntime'
+                logger.info(f"ONNX Runtime model loaded: {resolved_onnx} [provider={self.active_provider}]")
+            # --- 3. Attempt OpenCV DNN Fallback ---
+            elif self._try_load_opencv_dnn(resolved_onnx):
                 self.backend = 'opencv_dnn'
-                logger.info(f"OpenCV DNN ONNX model loaded: {onnx_path}")
+                self.active_provider = 'OpenCV_CPU'
+                logger.info(f"OpenCV DNN ONNX model loaded: {resolved_onnx}")
 
+        # --- 4. Fallback: HSV Heuristic ---
         if self.backend == 'heuristic':
+            self.active_provider = 'HSV_Heuristic'
             logger.warning(
                 "No TensorRT or ONNX model available. "
                 "Using HSV heuristic segmenter for demonstration."
             )
 
-        logger.info(f"BiSeNetV2 inference backend: {self.backend}")
+        logger.info(f"BiSeNetV2 inference backend: {self.backend} [provider={self.active_provider}]")
 
     def _try_load_tensorrt(self, engine_path: str) -> bool:
         """Attempt to load a TensorRT serialized engine."""
@@ -90,7 +130,6 @@ class BiSeNetV2Inference:
             with open(engine_path, 'rb') as f:
                 engine_data = f.read()
 
-            # Check if it's a valid TensorRT engine (not a placeholder stub)
             if len(engine_data) < 1024:
                 logger.warning("TensorRT engine file too small — likely a stub.")
                 return False
@@ -118,6 +157,51 @@ class BiSeNetV2Inference:
             logger.debug(f"TensorRT load failed: {e}")
             return False
 
+    def _try_load_onnxruntime(self, onnx_path: str) -> bool:
+        """Attempt to load ONNX model with ONNX Runtime using CUDAExecutionProvider."""
+        try:
+            # On Windows, add torch/lib to DLL directory to resolve CUDA/cuDNN DLLs
+            if sys.platform == "win32":
+                try:
+                    import torch
+                    torch_lib = os.path.join(os.path.dirname(torch.__file__), "lib")
+                    if os.path.exists(torch_lib) and hasattr(os, "add_dll_directory"):
+                        os.add_dll_directory(torch_lib)
+                except Exception:
+                    pass
+
+            import onnxruntime as ort
+
+            available_providers = ort.get_available_providers()
+            logger.info(f"Available ONNX Runtime execution providers: {available_providers}")
+
+            providers = []
+            if 'CUDAExecutionProvider' in available_providers:
+                providers.append('CUDAExecutionProvider')
+            providers.append('CPUExecutionProvider')
+
+            try:
+                self.ort_session = ort.InferenceSession(onnx_path, providers=providers)
+            except Exception as e:
+                logger.warning(f"Could not initialize providers {providers}: {e}. Retrying CPUExecutionProvider...")
+                self.ort_session = ort.InferenceSession(onnx_path, providers=['CPUExecutionProvider'])
+
+            self.active_provider = self.ort_session.get_providers()[0]
+            if 'CUDAExecutionProvider' in available_providers and self.active_provider != 'CUDAExecutionProvider':
+                self.cuda_fallback_warning = True
+                logger.warning(
+                    f"CUDAExecutionProvider was available but session initialized with '{self.active_provider}'. "
+                    f"Ensure CUDA 12 and cuDNN DLLs are in system PATH."
+                )
+
+            self.ort_input_name = self.ort_session.get_inputs()[0].name
+            self.ort_output_name = self.ort_session.get_outputs()[0].name
+
+            return True
+        except (ImportError, Exception) as e:
+            logger.debug(f"ONNX Runtime load failed: {e}")
+            return False
+
     def _try_load_opencv_dnn(self, onnx_path: str) -> bool:
         """Attempt to load an ONNX model with OpenCV DNN."""
         try:
@@ -143,6 +227,8 @@ class BiSeNetV2Inference:
         """
         if self.backend == 'tensorrt':
             return self._infer_tensorrt(image)
+        elif self.backend == 'onnxruntime':
+            return self._infer_onnxruntime(image)
         elif self.backend == 'opencv_dnn':
             return self._infer_opencv_dnn(image)
         else:
@@ -152,9 +238,10 @@ class BiSeNetV2Inference:
         """TensorRT INT8 inference path."""
         import pycuda.driver as cuda
 
-        # Preprocess: resize, normalize, CHW, batch
-        resized = cv2.resize(image, (self.input_w, self.input_h))
-        blob = resized.astype(np.float32) / 255.0
+        t0 = time.perf_counter()
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        resized = cv2.resize(rgb, (self.input_w, self.input_h), interpolation=cv2.INTER_LINEAR)
+        blob = (resized.astype(np.float32) / 255.0 - self.mean) / self.std
         blob = blob.transpose(2, 0, 1)  # HWC → CHW
         blob = np.expand_dims(blob, axis=0)  # Add batch dim
         blob = np.ascontiguousarray(blob)
@@ -167,30 +254,91 @@ class BiSeNetV2Inference:
         )
         cuda.memcpy_dtoh_async(self.h_output, self.d_output, self.cuda_stream)
         self.cuda_stream.synchronize()
+        self.last_latency_ms = (time.perf_counter() - t0) * 1000.0
 
         # Map model classes to NETRA 4-class scheme
         mask = np.clip(self.h_output, 0, NUM_CLASSES - 1).astype(np.uint8)
+
+        # Calculate class distribution
+        counts = np.bincount(mask.flatten(), minlength=NUM_CLASSES)
+        total = mask.size
+        pcts = (counts / total) * 100.0
+        self.last_dist_str = f"Gnd:{pcts[0]:.1f}% Veg:{pcts[1]:.1f}% Mud:{pcts[2]:.1f}% Obs:{pcts[3]:.1f}%"
 
         # Resize back to original image dimensions
         if mask.shape != image.shape[:2]:
             mask = cv2.resize(mask, (image.shape[1], image.shape[0]),
                               interpolation=cv2.INTER_NEAREST)
 
-        confidence = 0.92  # TensorRT INT8 typically high confidence
+        confidence = 0.92
+        return mask, confidence
+
+    def _infer_onnxruntime(self, image: np.ndarray) -> Tuple[np.ndarray, float]:
+        """
+        ONNX Runtime inference path.
+        Exact preprocessing matching training pipeline:
+          1. BGR -> RGB
+          2. Resize to 1024x448
+          3. /255.0 normalization + ImageNet mean/std
+          4. Transpose to CHW (1, 3, 448, 1024)
+        """
+        t0 = time.perf_counter()
+
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if (rgb.shape[1], rgb.shape[0]) != (self.input_w, self.input_h):
+            rgb_resized = cv2.resize(rgb, (self.input_w, self.input_h), interpolation=cv2.INTER_LINEAR)
+        else:
+            rgb_resized = rgb
+
+        rgb_norm = (rgb_resized.astype(np.float32) / 255.0 - self.mean) / self.std
+        blob = np.expand_dims(rgb_norm.transpose(2, 0, 1), axis=0).astype(np.float32)
+
+        output = self.ort_session.run([self.ort_output_name], {self.ort_input_name: blob})[0]
+        self.last_latency_ms = (time.perf_counter() - t0) * 1000.0
+
+        # Output shape: (1, NUM_CLASSES, H, W) -> Argmax
+        mask = np.argmax(output[0], axis=0).astype(np.uint8)
+        mask = np.clip(mask, 0, NUM_CLASSES - 1)
+
+        # Calculate class distribution
+        counts = np.bincount(mask.flatten(), minlength=NUM_CLASSES)
+        total = mask.size
+        pcts = (counts / total) * 100.0
+        self.last_dist_str = f"Gnd:{pcts[0]:.1f}% Veg:{pcts[1]:.1f}% Mud:{pcts[2]:.1f}% Obs:{pcts[3]:.1f}%"
+
+        # Resize back to original ROI image dimensions
+        if mask.shape != image.shape[:2]:
+            mask = cv2.resize(mask, (image.shape[1], image.shape[0]),
+                              interpolation=cv2.INTER_NEAREST)
+
+        confidence = 0.95
         return mask, confidence
 
     def _infer_opencv_dnn(self, image: np.ndarray) -> Tuple[np.ndarray, float]:
         """OpenCV DNN ONNX inference path."""
-        blob = cv2.dnn.blobFromImage(
-            image, 1.0 / 255.0, (self.input_w, self.input_h),
-            swapRB=True, crop=False,
-        )
+        t0 = time.perf_counter()
+
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if (rgb.shape[1], rgb.shape[0]) != (self.input_w, self.input_h):
+            rgb_resized = cv2.resize(rgb, (self.input_w, self.input_h), interpolation=cv2.INTER_LINEAR)
+        else:
+            rgb_resized = rgb
+
+        rgb_norm = (rgb_resized.astype(np.float32) / 255.0 - self.mean) / self.std
+        blob = np.expand_dims(rgb_norm.transpose(2, 0, 1), axis=0).astype(np.float32)
+
         self.dnn_net.setInput(blob)
         output = self.dnn_net.forward()
+        self.last_latency_ms = (time.perf_counter() - t0) * 1000.0
 
         # output shape: (1, NUM_CLASSES, H, W) — take argmax
         mask = np.argmax(output[0], axis=0).astype(np.uint8)
         mask = np.clip(mask, 0, NUM_CLASSES - 1)
+
+        counts = np.bincount(mask.flatten(), minlength=NUM_CLASSES)
+        total = mask.size
+        pcts = (counts / total) * 100.0
+        self.last_dist_str = f"Gnd:{pcts[0]:.1f}% Veg:{pcts[1]:.1f}% Mud:{pcts[2]:.1f}% Obs:{pcts[3]:.1f}%"
 
         if mask.shape != image.shape[:2]:
             mask = cv2.resize(mask, (image.shape[1], image.shape[0]),
@@ -203,16 +351,13 @@ class BiSeNetV2Inference:
         """
         HSV color-space heuristic segmenter (zero-dependency demo fallback).
 
-        This provides a coarse but functional terrain classification using
-        only color analysis — sufficient for visual demonstration and
-        integration testing without any trained model.
-
         Heuristic rules:
           - Green-dominant pixels → PLIANT_VEGETATION (grass/brush)
           - Brown/dark pixels     → SOLID_GROUND (soil/gravel)
           - Very dark pixels      → MUD_HAZARD (shadow/wet regions)
           - High saturation grey  → RIGID_OBSTACLE (rocks/concrete)
         """
+        t0 = time.perf_counter()
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         h, s, v = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
 
@@ -229,15 +374,21 @@ class BiSeNetV2Inference:
         # Rigid obstacles: very dark OR very high contrast edges
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, 100, 200)
-        # Dilate edges to create obstacle regions
         kernel = np.ones((7, 7), np.uint8)
         obstacle_regions = cv2.dilate(edges, kernel, iterations=2)
         obstacle_mask = (obstacle_regions > 0) & (v > 30)
         mask[obstacle_mask] = CLASS_RIGID_OBSTACLE
 
-        # Also mark very bright specular regions as obstacles (rocks in sunlight)
+        # Also mark very bright specular regions as obstacles
         bright_mask = (v > 220) & (s < 30)
         mask[bright_mask] = CLASS_RIGID_OBSTACLE
 
-        confidence = 0.55  # Heuristic has lower confidence
+        self.last_latency_ms = (time.perf_counter() - t0) * 1000.0
+
+        counts = np.bincount(mask.flatten(), minlength=NUM_CLASSES)
+        total = mask.size
+        pcts = (counts / total) * 100.0
+        self.last_dist_str = f"Gnd:{pcts[0]:.1f}% Veg:{pcts[1]:.1f}% Mud:{pcts[2]:.1f}% Obs:{pcts[3]:.1f}%"
+
+        confidence = 0.55
         return mask, confidence
