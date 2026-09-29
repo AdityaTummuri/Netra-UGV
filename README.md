@@ -1,10 +1,11 @@
-## 📂 Repository Structure & Project Documentation
+## 📁 Repository Structure & Project Documentation
 
 All complete engineering reports, slide decks, technical specifications, and presentation video scripts have been consolidated into [`docs/`](./docs/):
 
 ```
 SIH-2/
 ├── README.md                         # Main repository overview, specs & direct links
+├── dashboard/                        # Tactical Ground Control Station (GCS) Web Dashboard (pnpm, React, Vite)
 ├── docs/                             # Complete project technical documentation
 │   ├── MASTER_PROJECT_REPORT.md      # Comprehensive defence master engineering report
 │   ├── TECHNICAL_ARCHITECTURE.md     # Deep-dive engineering blueprint & POSIX scheduling
@@ -21,6 +22,9 @@ SIH-2/
 ├── weights/                          # TensorRT INT8 engines & encrypted model binaries
 └── sim/                              # Gazebo Garden tactical world & UGV URDF models
 ```
+
+### 🎛️ Tactical Web Dashboard (Ground Control Station)
+* 👉 **[`dashboard/`](./dashboard/)** — Live control panel, central HUD & tactical 2D map with click-and-control waypoints, autonomous simulation engine, and multi-scenario Demo Mode built with `pnpm`.
 
 ### 📖 Direct Links to Documentation
 * 👉 **[Defence Master Engineering Report](./docs/MASTER_PROJECT_REPORT.md)** — In-depth technical synthesis, FIPS 140-3 cryptography, MIL-STD shielding, deterministic math, and failsafe hierarchy.
