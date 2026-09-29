@@ -2,6 +2,8 @@
 
 A military-grade Ground Control Station web dashboard for the **NETRA UGV** (Unmanned Ground Vehicle).
 
+🌐 **Live Deployment**: **[https://netraugv.vercel.app](https://netraugv.vercel.app)**
+
 ---
 
 ## ⚡ Features
@@ -61,4 +63,4 @@ pnpm dev
 pnpm build
 ```
 
-Open your browser at `http://localhost:5173`.
+Open your browser at `http://localhost:5173` or access the live deployment at `https://netraugv.vercel.app`.
