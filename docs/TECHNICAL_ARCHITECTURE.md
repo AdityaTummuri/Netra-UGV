@@ -1,8 +1,8 @@
-# 🛡️ NETRA-UGV: Technical Architecture & System Specifications
-### *Deep-Dive Engineering Blueprint for Defence Autonomous Navigation*
-**Initiative:** Smart India Hackathon (SIH 2025) | **Problem Statement ID:** 26126  
-**Host Organization:** Bharat Electronics Limited (BEL) — Navratna Defence PSU, Ministry of Defence  
-**Target Platform:** Tactical Unmanned Ground Vehicles (Tracked & 4-Wheel Skid-Steer)  
+# 🤖 NETRA-UGV: Technical Architecture & System Specifications
+### *Deep-Dive Engineering Blueprint for Vision-Based Autonomous Outdoor Navigation*
+**Initiative:** Smart India Hackathon (SIH 2026) | **Problem Statement ID:** SIH26126  
+**Host Organization:** Bharat Electronics Limited (BEL) — Smart Automation  
+**Target Platform:** Autonomous Outdoor Unmanned Ground Vehicles (Skid-Steer & Tracked)  
 **Primary Reference Files:** [README.md](../README.md) · [MASTER_PROJECT_REPORT.md](./MASTER_PROJECT_REPORT.md) · [VIDEO_SCRIPT_5MIN.md](./VIDEO_SCRIPT_5MIN.md)
 
 ---

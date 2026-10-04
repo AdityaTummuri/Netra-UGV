@@ -2,7 +2,7 @@
 NETRA-UGV Timed-Elastic-Band (TEB) Trajectory Optimizer
 =========================================================
 Implements a fast, kinodynamic Timed-Elastic-Band local trajectory optimizer
-tailored for 4-wheel skid-steer tactical uncrewed ground vehicles.
+tailored for 4-wheel skid-steer outdoor uncrewed ground vehicles.
 
 Key Features:
   - Non-holonomic skid-steer kinematic constraints.

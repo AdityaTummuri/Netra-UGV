@@ -46,7 +46,10 @@ try:
 except Exception:
     pass
 
-import onnxruntime as ort
+try:
+    import onnxruntime as ort
+except ImportError:
+    ort = None
 
 # 4 Tactical Terrain Classes
 CLASS_NAMES = [
@@ -71,7 +74,7 @@ COLORMAP_BGR[3] = [60, 76, 231]    # RIGID_OBSTACLE
 
 def run_test(
     model_path: str = r"weights/bisenetv2_rellis.onnx",
-    image_path: str = r"C:\Users\Aditya\Desktop\ai\Rellis_3D_pylon_camera_node\Rellis-3D\00000\pylon_camera_node\frame000000-1581624652_750.jpg",
+    image_path: str = r"weights/sample_terrain.jpg",
     mask_out_path: str = r"weights/test_segmentation_mask.png",
     overlay_out_path: str = r"weights/test_segmentation_overlay.png",
     target_w: int = 1024,
@@ -90,19 +93,21 @@ def run_test(
     print(f"Model: {model_path}")
     print(f"Image: {image_path}")
 
-    # 2. Load ONNX model with available execution providers
-    providers = ["CUDAExecutionProvider", "CPUExecutionProvider"] if "CUDAExecutionProvider" in ort.get_available_providers() else ["CPUExecutionProvider"]
-    try:
-        session = ort.InferenceSession(model_path, providers=providers)
-    except Exception:
-        # Fall back to CPU if provider fails initialization
-        session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
-
-    active_provider = session.get_providers()[0]
-    input_name = session.get_inputs()[0].name
-    output_name = session.get_outputs()[0].name
-    print(f"Execution Provider: {active_provider}")
-    print(f"Input Node: '{input_name}', Output Node: '{output_name}'")
+    # 2. Load ONNX model with available backend (ONNX Runtime or OpenCV DNN)
+    if ort is not None:
+        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"] if "CUDAExecutionProvider" in ort.get_available_providers() else ["CPUExecutionProvider"]
+        try:
+            session = ort.InferenceSession(model_path, providers=providers)
+        except Exception:
+            session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+        active_provider = session.get_providers()[0]
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        print(f"Backend: ONNX Runtime ({active_provider})")
+        print(f"Input Node: '{input_name}', Output Node: '{output_name}'")
+    else:
+        print("Backend: OpenCV DNN (ONNX Runtime not installed, using OpenCV DNN)")
+        net = cv2.dnn.readNetFromONNX(model_path)
 
     # 3. Read image and preprocess
     bgr_orig = cv2.imread(image_path)
@@ -126,11 +131,17 @@ def run_test(
     blob = np.expand_dims(rgb_norm.transpose(2, 0, 1), axis=0).astype(np.float32)
 
     # 4. Warm-up and benchmark inference
-    session.run([output_name], {input_name: blob})
-
-    t_start = time.perf_counter()
-    output_tensor = session.run([output_name], {input_name: blob})[0]
-    infer_time_ms = (time.perf_counter() - t_start) * 1000.0
+    if ort is not None:
+        session.run([output_name], {input_name: blob})
+        t_start = time.perf_counter()
+        output_tensor = session.run([output_name], {input_name: blob})[0]
+        infer_time_ms = (time.perf_counter() - t_start) * 1000.0
+    else:
+        net.setInput(blob)
+        _ = net.forward()
+        t_start = time.perf_counter()
+        output_tensor = net.forward()
+        infer_time_ms = (time.perf_counter() - t_start) * 1000.0
 
     # 5. Argmax over classes
     # output_tensor shape: (1, 4, 448, 1024) -> pred_mask shape: (448, 1024)
@@ -181,7 +192,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--image",
         type=str,
-        default=r"C:\Users\Aditya\Desktop\ai\Rellis_3D_pylon_camera_node\Rellis-3D\00000\pylon_camera_node\frame000000-1581624652_750.jpg",
+        default=r"weights/sample_terrain.jpg",
         help="Path to test image.",
     )
     parser.add_argument(

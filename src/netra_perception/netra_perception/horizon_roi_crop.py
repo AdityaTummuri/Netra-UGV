@@ -1,7 +1,7 @@
 """
 NETRA-UGV Dynamic Ground-Horizon ROI Crop
 ==========================================
-Uses the vehicle's pitch angle from the tactical IMU to dynamically
+Uses the vehicle's pitch angle from the onboard IMU to dynamically
 crop the camera frame to the ground corridor, eliminating irrelevant
 sky, mountain crests, and vehicle chassis.
 

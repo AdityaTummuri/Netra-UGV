@@ -5,7 +5,7 @@ Implements the 4-Level Deterministic Failsafe Hierarchy:
   - Level 0: NOMINAL (Full visual-inertial autonomy)
   - Level 1: VISION_DEGRADED (Glare/dust washout, speed cap 0.8 m/s)
   - Level 2: VISION_CRITICAL (Mud/smoke, 1.5s air purge, limp-to-halt)
-  - Level 3: SECURITY_TAMPER (Hull breach, hardware zeroization, inert brick)
+  - Level 3: CRITICAL_SENSOR_BLACKOUT (Complete sensor blackout, emergency safe halt)
 
 Subscribes to:
   /netra/tamper_alert           (std_msgs/Bool or GPIO monitor)
@@ -144,7 +144,7 @@ class FailsafeStateMachine:
         """
         self.lens_obscuration = float(np_clip(lens_obscuration, 0.0, 1.0))
 
-        # --- LEVEL 3: SECURITY TAMPER (Irreversible) ---
+        # --- LEVEL 3: CRITICAL SENSOR BLACKOUT / TAMPER (Emergency Safe Halt) ---
         if tamper_detected or self.zeroization_engaged:
             self.current_mode = MODE_SECURITY_TAMPER
             self.zeroization_engaged = True

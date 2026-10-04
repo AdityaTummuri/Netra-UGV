@@ -5,7 +5,7 @@
   <description>
     S-ROS 2 security policies, SecOC CAN-FD authentication driver,
     hardware tamper monitoring, and cryptographic zeroization trigger
-    for the NETRA-UGV tactical autonomous navigation stack.
+    for the NETRA-UGV autonomous navigation stack.
   </description>
   <maintainer email="team@netra-ugv.in">NETRA-UGV Team</maintainer>
   <license>Apache-2.0</license>
