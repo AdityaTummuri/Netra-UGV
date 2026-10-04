@@ -8,8 +8,7 @@ import {
   AlertTriangle, 
   Terminal, 
   Wind, 
-  KeyRound,
-  RotateCcw
+  Satellite
 } from 'lucide-react';
 import type { SystemHealth, FailsafeState, LogEntry, FailsafeLevel } from '../../types/telemetry';
 import { playTacticalBlip } from '../../utils/audio';
@@ -20,8 +19,6 @@ interface TelemetryHealthPanelProps {
   logs: LogEntry[];
   onTriggerAirPurge: () => void;
   onSetFailsafeLevel: (level: FailsafeLevel) => void;
-  onZeroize: () => void;
-  onResetZeroize: () => void;
 }
 
 export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
@@ -30,16 +27,13 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
   logs,
   onTriggerAirPurge,
   onSetFailsafeLevel,
-  onZeroize,
-  onResetZeroize,
 }) => {
-  const [zeroizeSafetyCover, setZeroizeSafetyCover] = useState<boolean>(false);
-  const [logFilter, setLogFilter] = useState<'ALL' | 'DANGER' | 'SECOC'>('ALL');
+  const [logFilter, setLogFilter] = useState<'ALL' | 'DANGER' | 'CANBUS'>('ALL');
 
   const filteredLogs = logs.filter(l => {
     if (logFilter === 'ALL') return true;
     if (logFilter === 'DANGER') return l.level === 'DANGER' || l.level === 'WARN';
-    if (logFilter === 'SECOC') return l.level === 'SECOC';
+    if (logFilter === 'CANBUS') return l.level === 'SECOC' || l.source === 'CAN_BUS';
     return true;
   });
 
@@ -119,8 +113,8 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
                   : 'bg-tactical-900 border-tactical-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <div className="font-bold">L3: TAMPER</div>
-              <div className="text-[9px] text-slate-500">Zeroize Hardware</div>
+              <div className="font-bold">L3: CRITICAL</div>
+              <div className="text-[9px] text-slate-500">Sensor Blackout</div>
             </button>
           </div>
 
@@ -143,54 +137,31 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
           </div>
         </div>
 
-        {/* FIPS 140-3 Hardware Zeroization Crowbar Trigger */}
-        <div className="p-3 rounded-xl bg-tactical-950 border border-red-900/60 font-mono text-xs space-y-2">
-          <div className="flex items-center justify-between text-red-400 font-bold">
-            <span className="flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5" />
-              HARDWARE ZEROIZATION
+                {/* GPS Signal Quality Indicator */}
+        <div className="p-3 rounded-xl bg-tactical-950 border border-tactical-800 space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-slate-400 uppercase font-bold flex items-center gap-1.5">
+              <Satellite className="w-3.5 h-3.5 text-amber-400" />
+              GPS SIGNAL QUALITY
             </span>
-            <span className="text-[10px] text-slate-400">FIPS 140-3</span>
+            <span className="text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/30">
+              GPS-DENIED
+            </span>
           </div>
-
-          {failsafe.zeroizationEngaged ? (
-            <div className="space-y-2">
-              <div className="p-2 rounded bg-red-950/80 border border-red-600 text-red-300 text-center animate-pulse">
-                KEYS ERASED • HARDWARE CROWBAR FIRED
-              </div>
-              <button
-                onClick={onResetZeroize}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-tactical-800 hover:bg-tactical-750 text-emerald-400 border border-emerald-500/40 text-xs font-bold"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>RESTORE MILITARY ESCROW KEYS</span>
-              </button>
+          <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono text-center">
+            <div className="p-1.5 rounded bg-tactical-900 border border-tactical-800 flex flex-col gap-0.5">
+              <span className="text-slate-500">SATELLITES</span>
+              <span className="text-amber-400 font-bold">0 / 0</span>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={zeroizeSafetyCover}
-                  onChange={(e) => setZeroizeSafetyCover(e.target.checked)}
-                  className="rounded bg-tactical-800 border-tactical-700 text-red-600 focus:ring-0"
-                />
-                <span>Flip Physical Safety Guard Cover</span>
-              </label>
-
-              <button
-                onClick={onZeroize}
-                disabled={!zeroizeSafetyCover}
-                className={`w-full py-1.5 rounded font-bold text-xs uppercase transition-all ${
-                  zeroizeSafetyCover 
-                    ? 'bg-red-600 hover:bg-red-500 text-white glow-danger' 
-                    : 'bg-tactical-850 text-slate-600 cursor-not-allowed border border-tactical-800'
-                }`}
-              >
-                EXECUTE HARDWARE ZEROIZE
-              </button>
+            <div className="p-1.5 rounded bg-tactical-900 border border-tactical-800 flex flex-col gap-0.5">
+              <span className="text-slate-500">NAV MODE</span>
+              <span className="text-cyan-400 font-bold">VISUAL-VIO</span>
             </div>
-          )}
+            <div className="p-1.5 rounded bg-tactical-900 border border-tactical-800 flex flex-col gap-0.5">
+              <span className="text-slate-500">DRIFT</span>
+              <span className="text-emerald-400 font-bold">&lt;1.2%</span>
+            </div>
+          </div>
         </div>
 
         {/* Vital Telemetry Gauges: Battery, RF, Temps */}
@@ -222,7 +193,7 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
             </div>
           </div>
 
-          {/* RF & SecOC Auth */}
+          {/* Motor Bus Status */}
           <div className="grid grid-cols-2 gap-2">
             <div className="p-2 rounded-lg bg-tactical-950 border border-tactical-800">
               <div className="flex items-center gap-1 text-[10px] text-slate-400">
@@ -235,11 +206,11 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
 
             <div className="p-2 rounded-lg bg-tactical-950 border border-tactical-800">
               <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                <ShieldAlert className="w-3 h-3 text-emerald-400" />
-                <span>SECOC PASS</span>
+                <ShieldAlert className="w-3 h-3 text-cyan-400" />
+                <span>CAN-FD BUS</span>
               </div>
-              <div className="text-emerald-300 font-bold">{health.secocAuthRate}%</div>
-              <div className="text-[9px] text-slate-500">AES-128 Valid</div>
+              <div className="text-cyan-300 font-bold">CAN-FD OK</div>
+              <div className="text-[9px] text-slate-500">Motor Bus Active</div>
             </div>
           </div>
 
@@ -272,7 +243,7 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
           <div className="flex items-center justify-between text-slate-300">
             <span className="flex items-center gap-1 font-bold">
               <Terminal className="w-3 h-3 text-cyan-400" />
-              S-ROS2 EVENT AUDIT
+              SYSTEM EVENT LOG
             </span>
             <div className="flex gap-1 text-[9px]">
               <button
@@ -288,10 +259,10 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
                 ALERT
               </button>
               <button
-                onClick={() => setLogFilter('SECOC')}
-                className={`px-1.5 py-0.5 rounded ${logFilter === 'SECOC' ? 'bg-emerald-900/60 text-emerald-300' : 'text-slate-500'}`}
+                onClick={() => setLogFilter('CANBUS')}
+                className={`px-1.5 py-0.5 rounded ${logFilter === 'CANBUS' ? 'bg-cyan-900/60 text-cyan-300' : 'text-slate-500'}`}
               >
-                SECOC
+                CAN-BUS
               </button>
             </div>
           </div>
@@ -303,7 +274,7 @@ export const TelemetryHealthPanel: React.FC<TelemetryHealthPanelProps> = ({
                 <span className={`shrink-0 font-bold ${
                   l.level === 'DANGER' ? 'text-red-400' :
                   l.level === 'WARN' ? 'text-amber-400' :
-                  l.level === 'SECOC' ? 'text-emerald-400' :
+                  l.level === 'SECOC' ? 'text-cyan-400' :
                   'text-cyan-400'
                 }`}>
                   [{l.source}]

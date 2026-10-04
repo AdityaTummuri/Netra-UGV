@@ -64,14 +64,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ mode, failsafeMode, onEmer
             <span className="font-bold tracking-wider text-base text-slate-100 flex items-center gap-1.5">
               NETRA UGV <span className="text-xs px-1.5 py-0.5 rounded bg-tactical-700 text-cyan-400 font-mono font-semibold">GCS-v2.5</span>
             </span>
-            <span className="text-xs px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 font-mono">
-              BEL DEFENCE
+            <span className="text-xs px-2 py-0.5 rounded border border-cyan-500/40 bg-cyan-950/40 text-cyan-300 font-mono">
+              BEL AUTONOMOUS
             </span>
           </div>
           <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2">
-            <span>S-ROS2 SECURE NODE</span>
+            <span>ROS2 HUMBLE NODE</span>
             <span className="text-slate-600">•</span>
-            <span className="text-emerald-400">CAN-FD AUTH: AES-128</span>
+            <span className="text-cyan-400">CAN-FD MOTOR BUS</span>
           </div>
         </div>
       </div>
@@ -103,9 +103,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ mode, failsafeMode, onEmer
             className="bg-tactical-900 text-xs font-mono text-slate-200 border border-tactical-600 rounded px-2.5 py-1 focus:outline-none focus:border-emerald-400 cursor-pointer"
           >
             <option value="OFF">MANUAL / IDLE</option>
-            <option value="PATROL_BORDER">▶ SCENARIO 1: Perimeter Patrol (5 WPs)</option>
-            <option value="NEGATIVE_OBSTACLE">▶ SCENARIO 2: Negative Trench Void Avoidance</option>
-            <option value="LENS_WASHOUT">▶ SCENARIO 3: Mud Splatter & Air-Purge</option>
+            <option value="SAR_ROUTE">▶ SCENARIO 1: Search & Rescue Route (5 WPs)</option>
+            <option value="NEGATIVE_OBSTACLE">▶ SCENARIO 2: Ditch & Drop-Off Avoidance</option>
+            <option value="LENS_WASHOUT">▶ SCENARIO 3: Low Visibility Navigation</option>
           </select>
         </div>
 

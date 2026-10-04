@@ -1,8 +1,8 @@
 """
-NETRA-UGV Trajectory Planning & Actuation Orchestrator
-=====================================================
+NETRA-UGV Kinodynamic TEB Local Planner Node
+============================================
 Integrates the Timed-Elastic-Band (TEB) trajectory optimizer, adaptive speed
-governor, pitch/roll/shock safety guards, and SecOC cryptographic command signing
+governor, pitch/roll/shock safety guards, and CAN-FD motor command dispatch
 into a high-frequency (20 Hz) deterministic control loop.
 
 Subscribes to:
@@ -14,8 +14,8 @@ Subscribes to:
   /netra/terrain_classification  — netra_msgs/TerrainClassification (Semantic brush/mud)
 
 Publishes:
-  /cmd_vel_secured               — netra_msgs/SecuredTwist (20 Hz, SecOC-authenticated)
   /cmd_vel                       — geometry_msgs/Twist (Standard ROS 2 command)
+  /cmd_vel_secured               — netra_msgs/SecuredTwist (Optional CAN-FD SecOC motor command)
   /netra/local_plan              — nav_msgs/Path (Local trajectory for visualization)
 
 Reference:
@@ -130,7 +130,7 @@ from netra_planning.speed_governor import (
 )
 from netra_planning.safety_guards import SafetyGuards, GuardStatus
 
-# SecOC Cryptographic helper fallback
+# CAN-FD Motor Command Dispatch Helper
 try:
     from netra_security.crypto_utils import (
         FreshnessCounter,
@@ -267,7 +267,7 @@ class PlannerNode(Node):
 
         self.get_logger().info(
             f"NETRA Planner Node started at {rate_hz:.1f} Hz. "
-            f"SecOC authentication active. TEB ready."
+            f"CAN-FD motor bus active. TEB planner ready."
         )
 
     # -----------------------------------------------------------------------
@@ -400,7 +400,12 @@ class PlannerNode(Node):
         self._publish_path(planned_path)
 
     def _dispatch_actuation(self, v: float, omega: float, status_msg: str, dt: float):
-        """Construct SecOC authenticated frame and publish to actuation bus."""
+        """Construct motor command frame and publish to actuation bus.
+
+        Dispatches geometry_msgs/Twist to /cmd_vel for motor controllers.
+        Optional SecuredTwist with CAN-FD authentication is available for
+        hardened industrial deployments (see netra_security package).
+        """
         stamp = self.get_clock().now().to_msg()
 
         # Build SecOC payload with AES-128 CMAC and Freshness Counter

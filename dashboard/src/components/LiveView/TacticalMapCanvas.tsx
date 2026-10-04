@@ -40,10 +40,10 @@ const HILLS = [
 ];
 
 const TRENCHES = [
-  { cx: -8, cy: -4, w: 1.3, h: 8.0, name: 'TRENCH-ALPHA' },
-  { cx: 4, cy: 3, w: 10.0, h: 1.3, name: 'TRENCH-BRAVO' },
-  { cx: 15, cy: -12, w: 1.3, h: 7.0, name: 'TRENCH-CHARLIE' },
-  { cx: -2, cy: -13, w: 8.0, h: 1.3, name: 'TRENCH-DELTA' },
+  { cx: -8, cy: -4, w: 1.3, h: 8.0, name: 'DITCH-01' },
+  { cx: 4, cy: 3, w: 10.0, h: 1.3, name: 'RAVINE-01' },
+  { cx: 15, cy: -12, w: 1.3, h: 7.0, name: 'DITCH-02' },
+  { cx: -2, cy: -13, w: 8.0, h: 1.3, name: 'EROSION-01' },
 ];
 
 const BOULDERS = [
@@ -242,7 +242,7 @@ export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
     ctx.fillStyle = mapLayer === 'AI_COSTMAP' ? '#070b12' : '#090d16';
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Operational Battlefield Boundary (50m x 36m)
+    // 2. Operational Environment Boundary (50m x 36m)
     const boundsTL = worldToScreen(-25, 18, width, height);
     const boundsBR = worldToScreen(25, -18, width, height);
     const boundsW = boundsBR.x - boundsTL.x;
@@ -348,7 +348,7 @@ export const TacticalMapCanvas: React.FC<TacticalMapCanvasProps> = ({
       }
     });
 
-    // 6. Tactical Grid Lines
+    // 6. Terrain Grid Lines
     const origin = worldToScreen(0, 0, width, height);
     const gridStepMeters = scale > 12 ? 5 : 10;
     const gridStepPx = gridStepMeters * scale;

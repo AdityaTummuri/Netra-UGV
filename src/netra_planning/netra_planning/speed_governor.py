@@ -38,7 +38,7 @@ MODE_SECURITY_TAMPER = 3
 
 class SpeedGovernor:
     """
-    Adaptive velocity governor enforcing tactical speed constraints.
+    Adaptive velocity governor enforcing terrain-aware speed constraints.
     """
 
     def __init__(
@@ -111,7 +111,7 @@ class SpeedGovernor:
         # 1. Evaluate Failsafe Operational Mode
         if failsafe_mode == MODE_SECURITY_TAMPER:
             self._current_clamped_v_max = 0.0
-            self._governor_reason = "TAMPER LOCK (Level 3)"
+            self._governor_reason = "CRITICAL SENSOR BLACKOUT (Level 3)"
             return 0.0, 0.0, 0.0
 
         elif failsafe_mode == MODE_VISION_CRITICAL:

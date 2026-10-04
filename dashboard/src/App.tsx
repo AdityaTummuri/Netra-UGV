@@ -180,8 +180,6 @@ export const App: React.FC = () => {
               logs={logs}
               onTriggerAirPurge={() => ugvEngine.triggerAirPurge()}
               onSetFailsafeLevel={(lvl: FailsafeLevel) => ugvEngine.setFailsafeLevel(lvl)}
-              onZeroize={() => ugvEngine.triggerZeroization()}
-              onResetZeroize={() => ugvEngine.resetZeroization()}
             />
           )}
         </div>

@@ -1,9 +1,11 @@
 """
-NETRA-UGV SecOC CAN-FD Actuation Driver
-========================================
-Subscribes to /cmd_vel_secured (SecuredTwist), verifies the AES-128 CMAC
-authentication tag and monotonic freshness counter, then dispatches the
-authenticated velocity command to the CAN-FD bus (or logs in simulation).
+NETRA-UGV CAN-FD Motor Authentication Driver
+
+Implements Secure On-Board Communication (SecOC) per AUTOSAR specification for
+CAN-FD motor command authentication on industrial robotic platforms.
+
+This is an OPTIONAL security layer for hardened BEL industrial deployments.
+For standard outdoor navigation demonstrations, /cmd_vel dispatch is used directly.
 
 Reference: MASTER_PROJECT_REPORT.md §1.4, TECHNICAL_ARCHITECTURE.md §4.4
   POSIX Priority: 80 (SCHED_FIFO) on Cores 0-1

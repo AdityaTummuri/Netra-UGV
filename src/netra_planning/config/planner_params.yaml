@@ -7,7 +7,7 @@ netra_planner:
     # Execution frequency (POSIX SCHED_FIFO 70 real-time budget)
     control_rate_hz: 20.0
 
-    # Kinodynamic limits (4-wheel skid-steer tactical chassis)
+    # Kinodynamic limits (4-wheel skid-steer outdoor chassis)
     v_max: 1.5                   # Maximum forward velocity (m/s)
     v_min: -0.5                  # Maximum reverse velocity (m/s)
     omega_max: 1.5               # Maximum yaw rate (rad/s)

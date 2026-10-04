@@ -78,7 +78,7 @@ export const AiSegmentationLab: React.FC = () => {
                 INPUT: <span className="text-cyan-400 font-bold">1024 × 448 RGB</span>
               </div>
               <div className="absolute top-3 right-3 bg-tactical-950/80 backdrop-blur border border-tactical-700 px-2.5 py-1 rounded text-xs font-mono text-slate-300">
-                OUTPUT: <span className="text-emerald-400 font-bold">4 SOVEREIGN CLASSES</span>
+                OUTPUT: <span className="text-emerald-400 font-bold">4 TERRAIN CLASSES</span>
               </div>
             </div>
 
@@ -128,10 +128,10 @@ export const AiSegmentationLab: React.FC = () => {
 
         {/* Right Column: Tactical Class Breakdown & Model Specs (5 cols) */}
         <div className="xl:col-span-5 flex flex-col gap-3">
-          {/* Tactical 4-Class Breakdown */}
+          {/* Terrain 4-Class Breakdown */}
           <div className="p-3.5 rounded-xl bg-tactical-900/80 border border-tactical-700/80 shadow-xl flex flex-col gap-2.5">
             <h3 className="text-xs font-bold text-slate-300 font-mono uppercase tracking-wider flex items-center justify-between">
-              <span>Sovereign Tactical Class Distribution</span>
+              <span>Outdoor Terrain Class Distribution</span>
               <span className="text-slate-500 font-normal">RELLIS-3D Mapped</span>
             </h3>
 
@@ -203,7 +203,7 @@ export const AiSegmentationLab: React.FC = () => {
               </div>
               <div className="text-[10px] text-slate-400 flex justify-between">
                 <span>Trees, boulders, walls, drop-offs</span>
-                <span className="text-red-400 font-semibold">Repel: 255 Lethal</span>
+                <span className="text-red-400 font-semibold">Hard Stop: Impassable</span>
               </div>
             </div>
           </div>

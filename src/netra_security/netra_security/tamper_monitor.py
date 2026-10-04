@@ -1,9 +1,13 @@
 """
-NETRA-UGV Hardware Tamper Monitor & Zeroization Trigger
-========================================================
-Monitors physical tamper detection lines (GPIO serpentine continuity circuit
-and photodiode switches) and triggers Level 3 cryptographic zeroization
-upon hull breach detection.
+NETRA-UGV Physical Integrity Monitor
+
+Optional hardware security layer for BEL rugged industrial deployment.
+Monitors chassis integrity sensors and triggers controlled emergency safe-halt
+procedures upon physical tamper detection.
+
+NOTE: This module is NOT part of the core PS-26126 navigation deliverables
+(Path Detection, Visual Localization, Path Planning). It is retained as an
+optional BEL industrial security feature for hardened outdoor platforms.
 
 Reference: MASTER_PROJECT_REPORT.md §1.5
   - Serpentine continuity circuit & light-detecting photodiode switches

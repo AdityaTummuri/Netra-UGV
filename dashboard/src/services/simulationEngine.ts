@@ -41,7 +41,7 @@ export const INITIAL_HEALTH: SystemHealth = {
 export const DEFAULT_WAYPOINTS: Waypoint[] = [
   { id: 'wp-1', index: 1, x: 16, y: 10, status: 'pending', speedLimit: 1.5, label: 'ALPHA RECON' },
   { id: 'wp-2', index: 2, x: 18, y: -7, status: 'pending', speedLimit: 1.3, label: 'BRAVO OBSERVATION' },
-  { id: 'wp-3', index: 3, x: 5, y: -13, status: 'pending', speedLimit: 1.0, label: 'CHARLIE TRENCH CHECK' },
+  { id: 'wp-3', index: 3, x: 5, y: -13, status: 'pending', speedLimit: 1.0, label: 'DITCH-02 SCAN' },
   { id: 'wp-4', index: 4, x: -16, y: -9, status: 'pending', speedLimit: 1.4, label: 'DELTA PERIMETER' },
   { id: 'wp-5', index: 5, x: 0, y: 0, status: 'pending', speedLimit: 0.8, label: 'BASE HOME' },
 ];
@@ -75,7 +75,7 @@ export class NetraSimulationService {
 
   constructor() {
     this.addLog('INFO', 'NETRA_CORE', 'Netra UGV Ground Control Station initialized');
-    this.addLog('SECOC', 'CAN_SECURITY', 'SecOC AES-128-CMAC authentication bus online');
+    this.addLog('INFO', 'CAN_BUS', 'CAN-FD motor control bus initialized. cmd_vel dispatch active.');
   }
 
   public subscribe(listener: () => void) {
@@ -239,11 +239,11 @@ export class NetraSimulationService {
       playEmergencyAlertSound();
       this.addLog('DANGER', 'FAILSAFE', 'Severe lens obscuration / smoke! Entering Inertial Limp-to-Halt.');
     } else if (level === 3) {
-      this.failsafe.modeLabel = 'SECURITY TAMPER (Level 3)';
+      this.failsafe.modeLabel = 'CRITICAL SENSOR BLACKOUT (Level 3)';
       this.failsafe.vMaxAllowed = 0.0;
       this.failsafe.zeroizationEngaged = true;
       playEmergencyAlertSound();
-      this.addLog('DANGER', 'SECURITY', 'CRITICAL TAMPER BREACH! Hardware crowbar fired. S-ROS2 crypto zeroized.');
+      this.addLog('DANGER', 'SENSOR', 'CRITICAL: Complete sensor blackout detected. Initiating safe halt procedure.');
     }
     this.notify();
   }
@@ -255,34 +255,34 @@ export class NetraSimulationService {
     this.pose.linearVelocity = 0;
     this.pose.angularVelocity = 0;
     playEmergencyAlertSound();
-    this.addLog('DANGER', 'SECOC', 'FIPS 140-3 Cryptographic Zeroization Executed: Ephemeral & Flash Keys Erased');
+    this.addLog('WARN', 'SENSOR', 'Optical sensor arrays offline. Switching to IMU dead-reckoning limp mode.');
     this.notify();
   }
 
   public resetZeroization() {
     this.failsafe.zeroizationEngaged = false;
     this.setFailsafeLevel(0);
-    this.addLog('INFO', 'SECOC', 'Keys reprovisioned via authenticated military key escrow. System nominal.');
+    this.addLog('INFO', 'SENSOR', 'Optical sensor arrays recovered. Resuming visual odometry and perception pipeline.');
     this.notify();
   }
 
   // Demo Scenarios Handler
   public setDemoScenario(scenario: string) {
     this.demoScenario = scenario;
-    if (scenario === 'PATROL_BORDER') {
+    if (scenario === 'SAR_ROUTE') {
       this.waypoints = [
-        { id: 'wp-p1', index: 1, x: 16, y: 11, status: 'pending', speedLimit: 1.5, label: 'P-1 NE SECTOR' },
-        { id: 'wp-p2', index: 2, x: 18, y: -8, status: 'pending', speedLimit: 1.3, label: 'P-2 SE RIDGE' },
-        { id: 'wp-p3', index: 3, x: 5, y: -13, status: 'pending', speedLimit: 1.0, label: 'P-3 SOUTH PERIMETER' },
-        { id: 'wp-p4', index: 4, x: -16, y: -9, status: 'pending', speedLimit: 1.4, label: 'P-4 WEST VALLEY' },
-        { id: 'wp-p5', index: 5, x: 0, y: 0, status: 'pending', speedLimit: 1.0, label: 'BASE CP' },
+        { id: 'wp-sar1', index: 1, x: -10, y: -8, status: 'pending', speedLimit: 1.0, label: 'RUBBLE ENTRY' },
+        { id: 'wp-sar2', index: 2, x: -5,  y: 2,  status: 'pending', speedLimit: 0.8, label: 'CLEARING A' },
+        { id: 'wp-sar3', index: 3, x: 5,   y: -3, status: 'pending', speedLimit: 1.0, label: 'SEARCH ZONE 1' },
+        { id: 'wp-sar4', index: 4, x: 12,  y: 5,  status: 'pending', speedLimit: 1.2, label: 'CLEARING B' },
+        { id: 'wp-sar5', index: 5, x: 18,  y: 10, status: 'pending', speedLimit: 1.0, label: 'EXTRACTION POINT' },
       ];
       this.setMode('WAYPOINT_AUTO');
       this.startWaypointMission();
-      this.addLog('INFO', 'DEMO', 'Demo Scenario: 5-Point Autonomous Perimeter Patrol loaded & running');
+      this.addLog('INFO', 'DEMO', 'Demo Scenario: Search & Rescue Route (5 WPs) loaded & running');
     } else if (scenario === 'NEGATIVE_OBSTACLE') {
       this.waypoints = [
-        { id: 'wp-no1', index: 1, x: 5, y: 5, status: 'pending', speedLimit: 1.2, label: 'TRENCH-BRAVO SURV' },
+        { id: 'wp-no1', index: 1, x: 5, y: 5, status: 'pending', speedLimit: 1.2, label: 'DITCH-01 APPROACH' },
         { id: 'wp-no2', index: 2, x: 14, y: -6, status: 'pending', speedLimit: 1.0, label: 'VOID BYPASS' },
         { id: 'wp-no3', index: 3, x: 0, y: 0, status: 'pending', speedLimit: 0.9, label: 'BASE CP' },
       ];
@@ -306,7 +306,7 @@ export class NetraSimulationService {
       return;
     }
 
-    // Monotonic Freshness counter & SecOC
+    // Motor command freshness counter & CAN-FD dispatch
     this.health.freshnessCounter += 1;
 
     // Jitter / battery drain
@@ -354,7 +354,7 @@ export class NetraSimulationService {
           } else {
             // All reached!
             this.addLog('INFO', 'MISSION', 'All waypoints completed! Holding position.');
-            if (this.demoScenario === 'PATROL_BORDER') {
+            if (this.demoScenario === 'SAR_ROUTE') {
               // Loop patrol
               this.resetMissionProgress();
               this.startWaypointMission();

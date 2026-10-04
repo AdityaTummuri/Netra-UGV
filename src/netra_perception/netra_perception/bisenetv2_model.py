@@ -10,7 +10,7 @@ Reference:
   - MASTER_PROJECT_REPORT.md §3.1
   - WEIGHTS_AND_MODELS_GUIDE.md §2
 
-4 Tactical Output Classes:
+4 Terrain Output Classes:
   0 - SOLID_GROUND:      Soil, dirt road, gravel, asphalt, concrete
   1 - PLIANT_VEGETATION: Grass, light brush (traversable at governed speed)
   2 - MUD_HAZARD:        Wet mud, marsh, puddles, water
