@@ -81,7 +81,7 @@ ax1.tick_params(direction='in', which='both')
 ax2.set_facecolor('#ffffff')
 
 v = np.linspace(0.2, 1.5, 300)
-mu = 0.65       # Friction coefficient for tactical gravel/loose soil
+mu = 0.65       # Friction coefficient for outdoor gravel/loose soil
 g = 9.81
 T_r = 0.05      # 50 Hz control loop reaction delay (50 ms)
 
@@ -97,7 +97,7 @@ ax2.plot(v, d_brake, color='#e65100', linewidth=1.6, linestyle='--',
 ax2.plot(v, d_react, color='#555555', linewidth=1.4, linestyle=':',
          label=r'Reaction Distance $d_{\mathrm{react}}$ ($50\,\mathrm{ms}$ Loop)')
 
-# Point at patrol speed 1.2 m/s
+# Point at nominal cruise speed 1.2 m/s
 v_patrol = 1.2
 d_patrol = v_patrol * T_r + (v_patrol**2) / (2.0 * mu * g) # ~ 0.173 m
 ax2.plot(v_patrol, d_patrol, 's', color=color_crimson, markersize=7)
@@ -109,7 +109,7 @@ ax2.set_ylim(0.0, 0.45)
 ax2.legend(loc='upper left', frameon=True, facecolor='#ffffff', edgecolor='#cccccc', framealpha=1.0)
 
 # Callout placed in open top-right quadrant (Data X: [0.94, 1.36], Y: [0.27, 0.33])
-ax2.annotate(r'Patrol Speed ($v = 1.2\,\mathrm{m/s}$):' + '\n' +
+ax2.annotate(r'Cruise Speed ($v = 1.2\,\mathrm{m/s}$):' + '\n' +
              r'$\mathbf{d_{stop} = 0.173\,m \ll 2.8\,m}$' + '\n' +
              r'Reaction Buffer $> 2.3\,\mathrm{seconds}$',
              xy=(v_patrol, d_patrol), xytext=(0.95, 0.28),

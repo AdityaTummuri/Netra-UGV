@@ -1,5 +1,5 @@
 """
-Academic Figure 3: MIL-STD-461G Shielding Attenuation & RT-PREEMPT Jitter
+Academic Figure 3: Edge Compute Thermal Envelope & RT-PREEMPT Jitter
 Generated for SIH 26126 (NETRA-UGV / Bharat Electronics Limited)
 Publication Standard: IEEE Transactions on Industrial Informatics / IEEE RTSS
 Layout: 2 Subplots with Mathematically Verified Zero-Overlap Geometry
@@ -26,55 +26,63 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.0), dpi=300)
 fig.patch.set_facecolor('#ffffff')
 
 # ==============================================================================
-# SUBPLOT 1: MIL-STD-461G Radiated EMI Shielding Attenuation (10 kHz - 18 GHz)
+# SUBPLOT 1: Edge Compute Thermal Equilibrium & IP67 Ingress Envelope
 # ==============================================================================
 ax1.set_facecolor('#ffffff')
 
-f = np.logspace(4, 10.255, 500) # 1e4 to 1.8e10 Hz
-t_mm = 4.5 # Wall thickness in mm (Billet 6061-T6 Aluminum)
-sigma_r = 0.43 # Conductivity relative to copper (2.5e7 S/m)
-mu_r = 1.0
+T_amb = np.linspace(-20, 60, 300)
+P_load_W = 15.0  # Jetson Orin Nano + OAK-D full vision stack load (15W)
+theta_ja = 0.83  # Thermal resistance to junction (deg C / W)
+theta_ca = 0.35  # Enclosure case-to-ambient resistance
 
-# Schelkunoff Formulation:
-f_MHz = f / 1e6
-A_dB = 131.4 * (t_mm / 10.0) * np.sqrt(np.maximum(f_MHz, 1e-4) * sigma_r * mu_r) + 45.0
-R_dB = 168.0 - 10.0 * np.log10(np.maximum(f, 1e4) * mu_r / sigma_r)
-SE_ideal = A_dB + R_dB
-SE_gasket = 138.0 - 9.5 * np.log10(np.maximum(f_MHz, 1.0))
-SE_total = np.maximum(np.minimum(SE_ideal, SE_gasket), 87.2)
+T_junction = T_amb + P_load_W * theta_ja
+T_enclosure = T_amb + P_load_W * theta_ca
 
-color_se = '#004080'
-ax1.plot(f, SE_total, color=color_se, linewidth=2.4, 
-         label=r'Billet 6061-T6 Hull ($4.5\,\mathrm{mm}$) + Ag Gasket')
+color_junction = '#b22222'
+color_case = '#004080'
 
-# MIL-STD-461G RS103 Threshold (80 dB)
-ax1.axhline(80.0, color='#c0392b', linestyle='--', linewidth=1.8,
-            label=r'MIL-STD-461G RS103 Threshold ($80\,\mathrm{dB}$)')
+# Plot temperatures
+ax1.plot(T_amb, T_junction, color=color_junction, linewidth=2.4,
+         label=r'Jetson Orin Junction Temp $T_j$ ($15\,\mathrm{W}$ Load)')
+ax1.plot(T_amb, T_enclosure, color=color_case, linewidth=1.8, linestyle='--',
+         label=r'IP67 Sealed Enclosure Surface Temp $T_{\mathrm{enc}}$')
 
-# Marker for Ku-Band Radar Margin
-ax1.plot(1.8e10, 87.2, 'o', color=color_se, markersize=6)
+# Thermal Throttling Ceiling at 85 C
+ax1.axhline(85.0, color='#8b0000', linestyle=':', linewidth=1.8,
+            label=r'Thermal Throttling Limit ($85.0^\circ\mathrm{C}$)')
 
-ax1.set_xscale('log')
-ax1.set_xlim(1e4, 3e10)
-ax1.set_ylim(40, 160)
+# Shaded outdoor operating window (-10 C to +50 C)
+ax1.fill_between([-10, 50], [-15, -15], [95, 95], color='#2e7d32', alpha=0.10,
+                 label=r'Target Field Window ($-10^\circ\mathrm{C} \dots +50^\circ\mathrm{C}$)')
 
-# Legend placed in upper-right open space (Y: [146.6, 158.2] dB, strictly above 119 dB curve)
-ax1.legend(loc='upper right', frameon=True, facecolor='#ffffff', edgecolor='#cccccc', framealpha=1.0)
+# Point at 55 C extreme ambient
+t_ext = 55.0
+tj_ext = t_ext + P_load_W * theta_ja # 67.45 C
+ax1.plot(t_ext, tj_ext, 'o', color=color_junction, markersize=7)
 
-# Annotation for Ku-Band Margin placed cleanly in lower-right clear zone (Y: [50.6, 61.5] dB)
-# Strictly 18.5 dB below the 80 dB threshold line, zero line or curve intersection
-ax1.annotate(r'$\mathbf{SE = 87.2\,dB > 80\,dB}$' + '\n' +
-             r'(+7.2 dB Safety Margin @ 18 GHz)',
-             xy=(1.8e10, 87.2), xytext=(2e7, 53),
-             arrowprops=dict(arrowstyle='->', color=color_se, lw=1.3),
-             fontsize=8.5, color=color_se, fontweight='bold',
-             bbox=dict(boxstyle='round,pad=0.35', facecolor='#f4f8fb', edgecolor=color_se, lw=0.8))
+ax1.set_xlim(-20, 60)
+ax1.set_ylim(-15, 95)
 
-ax1.set_xlabel('Frequency (Hz)', fontweight='bold')
-ax1.set_ylabel('Shielding Effectiveness $SE$ (dB)', fontweight='bold')
-ax1.set_title(r'(a) MIL-STD-461G Radiated EMI Shielding Attenuation', fontweight='bold', pad=10)
+# Legend placed in upper-left
+ax1.legend(loc='upper left', frameon=True, facecolor='#ffffff', edgecolor='#cccccc', framealpha=1.0)
+
+callout_text = (
+    r"$\mathbf{T_j(55^\circ\mathrm{C}) = 67.5^\circ\mathrm{C} \ll 85.0^\circ\mathrm{C}}$" + "\n" +
+    r"Thermal Headroom: $+17.5^\circ\mathrm{C}$ Margin" + "\n" +
+    r"Sealing: IP67 (Dust-Tight, 1m Submersion)"
+)
+
+# Callout annotation in completely open lower-right space (under curves)
+ax1.annotate(callout_text,
+             xy=(t_ext, tj_ext), xytext=(22.0, -5.0),
+             arrowprops=dict(arrowstyle='->', color=color_junction, lw=1.3),
+             fontsize=8.5, color='#111111',
+             bbox=dict(boxstyle='round,pad=0.35', facecolor='#fff5f5', edgecolor=color_junction, lw=0.8))
+
+ax1.set_xlabel(r'Ambient Outdoor Temperature $T_{\mathrm{amb}}$ ($^\circ\mathrm{C}$)', fontweight='bold')
+ax1.set_ylabel(r'Operating Temperature ($^\circ\mathrm{C}$)', fontweight='bold')
+ax1.set_title(r'(a) Edge Compute Thermal Equilibrium & IP67 Ingress Envelope', fontweight='bold', pad=10)
 ax1.grid(True, which='major', color='#e0e0e0', linestyle='-', linewidth=0.8)
-ax1.grid(True, which='minor', color='#f5f5f5', linestyle=':', linewidth=0.5)
 ax1.tick_params(direction='in', which='both')
 
 # ==============================================================================
@@ -109,11 +117,10 @@ ax2.set_ylim(0, 0.18)
 ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.8)
 ax2.tick_params(direction='in', which='both')
 
-# Legend placed in upper-right (X: [56.8, 84.1], strictly 21.8 us right of the 35 us line)
+# Legend placed in upper-right
 ax2.legend(loc='upper right', frameon=True, facecolor='#ffffff', edgecolor='#cccccc', framealpha=1.0)
 
-# Annotation for RT-PREEMPT deterministic pass placed in center-right clear zone (X: [39.4, 70.4], Y: [0.046, 0.070])
-# Strictly below legend (bottom at 0.152) and strictly right of the 35 us line
+# Annotation for RT-PREEMPT deterministic pass
 ax2.annotate(r'$\mathbf{Deterministic\,Guarantee}$' + '\n' +
              r'Max Jitter: $31.8\,\mu\mathrm{s} < 35.0\,\mu\mathrm{s}$' + '\n' +
              r'Zero Deadline Misses ($N=10^5$)',
