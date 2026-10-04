@@ -9,13 +9,13 @@
 
 ## 1. Executive Summary
 
-This report documents the end-to-end design, implementation, training, verification, and ROS 2 integration of the **BiSeNetV2 off-road terrain semantic segmentation neural network** for the NETRA-UGV autonomous defence ground vehicle.
+This report documents the end-to-end design, implementation, training, verification, and ROS 2 integration of the **BiSeNetV2 off-road terrain semantic segmentation neural network** for the NETRA-UGV autonomous unmanned ground vehicle operating in unstructured outdoor environments.
 
-The vision pipeline enables the unmanned ground vehicle to analyze front-facing stereo camera imagery in real time, segmenting every pixel into one of **4 sovereign tactical terrain classes** to command speed governance, traction control, and collision avoidance without relying on paved roads or lane markers.
+The vision pipeline enables the unmanned ground vehicle to analyze front-facing stereo camera imagery in real time, segmenting every pixel into one of **4 terrain traversability classes** to command speed governance, traction control, and collision avoidance without relying on paved roads or lane markers.
 
 ---
 
-## 2. Dataset Auditing & Tactical Re-Mapping
+## 2. Dataset Auditing & Traversability Re-Mapping
 
 ### 2.1 Dataset Staging
 The multimodal **RELLIS-3D** dataset was extracted and verified across sequences `00000` through `00004`:
@@ -27,10 +27,10 @@ The multimodal **RELLIS-3D** dataset was extracted and verified across sequences
   * `test.lst`: **1,672** image-mask pairs
   * **Total matched split pairs:** **5,957** pairs (**0** pairing errors, 100% verified match)
 
-### 2.2 Tactical Ontology Re-Mapping
-The 20 raw RELLIS-3D classes were mathematically re-mapped to NETRA's 4 tactical reaction classes:
+### 2.2 Traversability Ontology Re-Mapping
+The 20 raw RELLIS-3D classes were mathematically re-mapped to NETRA's 4 terrain traversability classes:
 
-| Raw ID | RELLIS-3D Label | NETRA Class ID | Tactical Label | Vehicle Operational Response | Costmap Value |
+| Raw ID | RELLIS-3D Label | NETRA Class ID | Traversability Label | Vehicle Operational Response | Costmap Value |
 | :---: | :--- | :---: | :--- | :--- | :---: |
 | **1, 10, 23** | Dirt, Asphalt, Concrete | **0** | `SOLID_GROUND` | Full mission speed ($\le 1.5$ m/s) | **0** |
 | **3, 19** | Grass, Bush | **1** | `PLIANT_VEGETATION` | Governed velocity ($\le 0.5$ m/s) | **35** |
@@ -51,7 +51,7 @@ Implemented clean PyTorch BiSeNetV2 architecture in [`src/netra_perception/netra
 * **Detail Branch:** 3 convolution stages ($1/8$ spatial reduction, 128 channels) preserving fine spatial details (trail edges, ditches, grass stems).
 * **Semantic Branch:** Stem Block ($1/4$ reduction) + Gather-and-Expansion (GE) Layers + Context Embedding Block (GAP + Sigmoid channel gating) capturing high-level global context.
 * **Bilateral Guided Aggregation (BGA) Layer:** Fuses low-level edge features with semantic context.
-* **Segment Head:** Predicts 4 tactical logits with bilinear upsampling back to input resolution ($1024 \times 448$).
+* **Segment Head:** Predicts 4 traversability class logits with bilinear upsampling back to input resolution ($1024 \times 448$).
 * **Training Boosters:** Added 4 auxiliary heads during training (`use_aux=True`) for deep supervision, automatically stripped during export/evaluation.
 * **Total Parameters:** **2.31M** parameters.
 
@@ -65,7 +65,7 @@ Developed [`scripts/train_bisenetv2.py`](file:///c:/Users/Aditya/Desktop/Netra-U
 * **Optimization:** AdamW optimizer (`lr=1e-3`, `weight_decay=1e-4`) with Cosine Annealing learning rate schedule.
 * **Loss Function:** 4-class Cross-Entropy Loss with auxiliary loss supervision and `ignore_index=255`.
 * **Validation Metric:** Real-time confusion matrix computing per-class IoU and mean IoU (mIoU).
-* **Training Result:** Best validation mIoU of **76.25%** achieved across all 4 tactical classes.
+* **Training Result:** Best validation mIoU of **76.25%** achieved across all 4 terrain traversability classes.
 * **Artifact Saved:** [`weights/bisenetv2_rellis_best.pth`](file:///c:/Users/Aditya/Desktop/Netra-UGV/weights/bisenetv2_rellis_best.pth) (29.59 MB).
 
 ---
