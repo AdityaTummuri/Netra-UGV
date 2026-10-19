@@ -35,6 +35,18 @@ Targeted at BEL's outdoor robotics platforms, NETRA-UGV addresses critical missi
 | **2. Visual Localization (SLAM/Odometry)** | Stereo Visual-Inertial Odometry pipeline using **OpenVINS Multi-State Constraint Kalman Filter (MSCKF)** fused with high-frequency IMU and KLT optical feature tracking. | **< 1.2% translation drift** over 500 m GPS-denied closed loops; 50 Hz real-time update rate with zero external satellite dependence. |
 | **3. Collision Avoidance & Path Planning** | **Kinodynamic TEB (Timed Elastic Band) Local Planner** coupled with a geometric **$v$-Disparity negative obstacle raycaster** to identify ditches, trenches, and drop-offs. | Dynamic obstacle avoidance at up to **1.5 m/s**; detects >0.35 m ground drop-offs in **< 0.6 ms** with >2.3 s braking margin. |
 
+
+### Benchmark Reproducibility Notes
+
+For meaningful comparisons, report the context alongside every performance number:
+
+- **Segmentation quality:** dataset and split, class mapping, image resolution, and the evaluation metric implementation.
+- **Inference latency:** exact hardware, runtime/library versions, precision mode, batch size, input dimensions, and whether preprocessing and postprocessing are included.
+- **Localization drift:** route length and shape, sensor configuration, ground-truth source, and the metric definition used for the reported drift.
+- **Obstacle detection:** obstacle/drop-off geometry, distance and lighting conditions, number of trials, and the success/failure criteria.
+
+Keep measured results separate from design targets and simulation-only results. Update these details when benchmark conditions change so reviewers can reproduce results and understand the limits of each claim.
+
 ---
 
 ## 🏗️ System Architecture & Block Diagram
